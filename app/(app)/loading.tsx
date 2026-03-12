@@ -7,7 +7,7 @@ export default function Loading() {
                 <div className="w-24 h-24 rounded-full border-4 border-slate-100 border-t-brand-teal animate-spin" />
                 <div className="absolute inset-0 flex items-center justify-center">
                     <img
-                        src="/logo.png"
+                        src="/new_logo.png"
                         alt=""
                         className="w-10 h-10 object-contain animate-pulse"
                     />

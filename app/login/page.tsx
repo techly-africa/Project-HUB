@@ -119,7 +119,7 @@ function LoginForm() {
         </div>
 
         <p className="text-center text-slate-300 text-[10px] uppercase tracking-[0.2em] font-bold mt-10">
-          Rukisha Solutions Rwanda Ltd
+          Project Hub
         </p>
       </div>
     </div>

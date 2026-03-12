@@ -7,14 +7,38 @@ import { useRouter } from "next/navigation";
 import type { Phase, Task } from "@/lib/types";
 import PhaseProgress from "./PhaseProgress";
 import TaskRow from "./TaskRow";
+import ConfirmModal from "./ConfirmModal";
 
 export default function PhaseCard({ phase, planType, allTasks }: { phase: Phase; planType: string; allTasks: Task[] }) {
   const router = useRouter();
+  const [isDeleting, setIsDeleting] = useState(false);
   const [open, setOpen] = useState(true);
   const hasTasks = phase.tasks.length > 0;
 
+  async function handleDelete() {
+    try {
+      await deletePhase(phase.id);
+      toast.success("Milestone deleted");
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete milestone.");
+    }
+  }
+
   return (
     <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+      {/* Confirm deletion */}
+      <ConfirmModal
+        isOpen={isDeleting}
+        onClose={() => setIsDeleting(false)}
+        onConfirm={handleDelete}
+        title="Delete Milestone?"
+        message={`Are you sure you want to delete "${phase.name}"? This will also remove all ${phase.tasks.length} tasks within it. This action cannot be undone.`}
+        confirmText="Delete"
+        confirmVariant="danger"
+      />
+
       {/* Phase header */}
       <div
         role="button"
@@ -45,18 +69,9 @@ export default function PhaseCard({ phase, planType, allTasks }: { phase: Phase;
         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 ml-2 shrink-0">{phase.tasks.length} tasks</span>
 
         <button
-          onClick={async (e) => {
+          onClick={(e) => {
             e.stopPropagation();
-            if (confirm(`Are you sure you want to delete milestone "${phase.name}"? This will also delete all ${phase.tasks.length} tasks within it.`)) {
-              try {
-                await deletePhase(phase.id);
-                toast.success("Milestone deleted");
-                router.refresh();
-              } catch (err) {
-                console.error(err);
-                toast.error("Failed to delete milestone.");
-              }
-            }
+            setIsDeleting(true);
           }}
           className="ml-2 p-1.5 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded-lg transition-colors focus:ring-1 focus:ring-red-500 outline-none"
           title="Delete Milestone"
@@ -84,7 +99,7 @@ export default function PhaseCard({ phase, planType, allTasks }: { phase: Phase;
           ))}
 
           {/* Add Task UI */}
-          <AddTaskInline phaseId={phase.id} onCancel={() => { }} />
+          <AddTaskInline phaseId={phase.id} phaseWbs={phase.wbs} taskCount={phase.tasks.length} onCancel={() => { }} />
         </div>
       )}
     </div>

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Rukisha — Project Tracker",
-  description: "Merchant Lending Product — Implementation Tracker",
+  title: "Project Hub — Project Tracker",
+  description: "Project Hub — Implementation Tracker",
 };
 
 import { Toaster } from "sonner";

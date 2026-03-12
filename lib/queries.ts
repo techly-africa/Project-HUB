@@ -9,6 +9,7 @@ import type { Phase, Plan, PlanType, Profile, ProjectStats, Task, TaskComment, T
  */
 function handleSupabaseError(error: any) {
   if (error) {
+    console.error("Supabase Error Full Diagnostic:", error instanceof Error ? { ...error, message: error.message, stack: error.stack } : JSON.stringify(error, null, 2));
     const message = error.message || "An unexpected database error occurred.";
     const err = new Error(message);
     (err as any).details = error.details;
@@ -195,6 +196,20 @@ export async function updateTaskDates(id: string, start_date: string | null, end
 export async function deleteTask(id: string) {
   const sb = createSupabaseServerClient();
   const { error } = await sb.from("tasks").delete().eq("id", id);
+  handleSupabaseError(error);
+}
+
+export async function updateTaskDetails(
+  id: string,
+  name: string,
+  owner: string,
+  description: string | null,
+  remarks: string | null
+) {
+  const sb = createSupabaseServerClient();
+  const { error } = await sb.from("tasks")
+    .update({ name, owner, description, remarks, updated_at: new Date().toISOString() })
+    .eq("id", id);
   handleSupabaseError(error);
 }
 

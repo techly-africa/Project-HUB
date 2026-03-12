@@ -5,10 +5,9 @@ import { createTask } from "@/lib/queries";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-export default function AddTaskInline({ phaseId, onCancel, onSuccess }: { phaseId: string; onCancel?: () => void; onSuccess?: () => void }) {
+export default function AddTaskInline({ phaseId, phaseWbs, taskCount, onCancel, onSuccess }: { phaseId: string; phaseWbs: string; taskCount: number; onCancel?: () => void; onSuccess?: () => void }) {
     const [isAdding, setIsAdding] = useState(!onCancel);
     const [name, setName] = useState("");
-    const [wbs, setWbs] = useState("");
     const [description, setDescription] = useState("");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
@@ -17,15 +16,15 @@ export default function AddTaskInline({ phaseId, onCancel, onSuccess }: { phaseI
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        if (!name || !wbs || !startDate || !endDate) {
-            toast.error("Task name, WBS, Start Date, and End Date are required.");
+        if (!name || !startDate || !endDate) {
+            toast.error("Task name, Start Date, and End Date are required.");
             return;
         }
+        const wbs = `${phaseWbs}.${taskCount + 1}`;
         setIsLoading(true);
         try {
             await createTask(phaseId, name, wbs, undefined, description, startDate, endDate);
             setName("");
-            setWbs("");
             setDescription("");
             setStartDate("");
             setEndDate("");
@@ -54,16 +53,12 @@ export default function AddTaskInline({ phaseId, onCancel, onSuccess }: { phaseI
 
     return (
         <form onSubmit={handleSubmit} className="px-5 py-6 bg-slate-50/50 space-y-4 animate-in slide-in-from-top-1 duration-200 rounded-2xl border border-slate-100 mt-2">
-            <div className="flex gap-3">
+            <div className="flex gap-3 items-center">
+                <span className="text-[10px] font-black text-slate-400 font-mono bg-slate-100 px-2.5 py-2 rounded-xl shrink-0">
+                    {phaseWbs}.{taskCount + 1}
+                </span>
                 <input
                     autoFocus
-                    required
-                    placeholder="WBS"
-                    className="w-20 bg-white border border-slate-200 rounded-xl px-3 py-2 text-[10px] font-bold text-slate-900 focus:ring-1 focus:ring-brand-teal outline-none"
-                    value={wbs}
-                    onChange={e => setWbs(e.target.value)}
-                />
-                <input
                     required
                     placeholder="Task Name..."
                     className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2 text-[10px] font-bold text-slate-900 focus:ring-1 focus:ring-brand-teal outline-none"

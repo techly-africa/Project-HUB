@@ -11,14 +11,14 @@ export default function BrandLogo({ className = "w-32", showText = true }: { cla
         <div className={`flex flex-col items-center select-none ${className}`}>
             <div className="relative w-full aspect-[2/1] flex items-center justify-center">
                 <img
-                    src="/logo.png"
-                    alt="Rukisha Logo"
+                    src="/new_logo.png"
+                    alt="Project Hub Logo"
                     className="max-w-full max-h-full object-contain"
                 />
             </div>
             {showText && (
                 <span className="text-3xl font-black text-black mt-2 tracking-tight">
-                    Rukisha
+                    Project Hub
                 </span>
             )}
         </div>

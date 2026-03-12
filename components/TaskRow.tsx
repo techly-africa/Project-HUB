@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import type { Task, TaskComment, Profile } from "@/lib/types";
 import StatusBadge from "./StatusBadge";
-import { getTaskComments, addTaskComment, getProfiles, assignTask, setTaskDeadline, updateTaskDates, deleteTask } from "@/lib/queries";
+import { getTaskComments, addTaskComment, getProfiles, assignTask, setTaskDeadline, updateTaskDates, deleteTask, updateTaskDetails } from "@/lib/queries";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import ConfirmModal from "./ConfirmModal";
 
 interface Props {
   task: Task;
@@ -21,8 +22,41 @@ export default function TaskRow({ task, planType, allTasks }: Props) {
   const [newComment, setNewComment] = useState("");
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(task.name);
+  const [editOwner, setEditOwner] = useState(task.owner);
+  const [editDescription, setEditDescription] = useState(task.description ?? "");
+  const [editRemarks, setEditRemarks] = useState(task.remarks ?? "");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   const router = useRouter();
+
+  async function handleSaveEdit() {
+    setIsSavingEdit(true);
+    try {
+      await updateTaskDetails(task.id, editName, editOwner, editDescription || null, editRemarks || null);
+      toast.success("Task updated");
+      setIsEditing(false);
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save changes");
+    } finally {
+      setIsSavingEdit(false);
+    }
+  }
+
+  async function handleDelete() {
+    try {
+      await deleteTask(task.id);
+      toast.success("Task deleted");
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete task.");
+    }
+  }
 
   useEffect(() => {
     if (open) {
@@ -67,18 +101,22 @@ export default function TaskRow({ task, planType, allTasks }: Props) {
   async function handleAssign(profileId: string) {
     try {
       await assignTask(task.id, profileId === "none" ? null : profileId);
+      toast.success("Assignee updated");
       router.refresh();
     } catch (err) {
       console.error(err);
+      toast.error("Failed to update assignee");
     }
   }
 
   async function handleDeadlineChange(date: string) {
     try {
       await setTaskDeadline(task.id, date || null);
+      toast.success("Deadline updated");
       router.refresh();
     } catch (err) {
       console.error(err);
+      toast.error("Failed to update deadline");
     }
   }
 
@@ -86,6 +124,17 @@ export default function TaskRow({ task, planType, allTasks }: Props) {
 
   return (
     <div className={`border-b border-slate-50 last:border-0 transition-colors ${open ? "bg-slate-50/30" : ""} ${isBlocked ? "bg-red-50/20" : ""}`}>
+      {/* Confirm deletion */}
+      <ConfirmModal
+        isOpen={isDeleting}
+        onClose={() => setIsDeleting(false)}
+        onConfirm={handleDelete}
+        title="Delete Task?"
+        message={`Are you sure you want to delete "${task.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        confirmVariant="danger"
+      />
+
       <div
         className={`flex items-start gap-3 px-5 py-4 transition-colors cursor-pointer ${isBlocked ? "hover:bg-red-50/40" : "hover:bg-slate-50/50"}`}
         onClick={() => setOpen((o) => !o)}
@@ -134,18 +183,20 @@ export default function TaskRow({ task, planType, allTasks }: Props) {
         <div className="shrink-0 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <StatusBadge taskId={task.id} status={task.status} planType={planType} />
           <button
-            onClick={async (e) => {
+            onClick={(e) => {
               e.stopPropagation();
-              if (confirm(`Are you sure you want to delete task "${task.name}"?`)) {
-                try {
-                  await deleteTask(task.id);
-                  toast.success("Task deleted");
-                  router.refresh();
-                } catch (err) {
-                  console.error(err);
-                  toast.error("Failed to delete task.");
-                }
-              }
+              setIsEditing(true);
+              setOpen(true);
+            }}
+            className="p-1.5 hover:bg-slate-100 text-slate-300 hover:text-slate-600 rounded-lg transition-colors"
+            title="Edit Task"
+          >
+            <span className="text-[14px]">✏️</span>
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsDeleting(true);
             }}
             className="p-1.5 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded-lg transition-colors group"
             title="Delete Task"
@@ -185,9 +236,14 @@ export default function TaskRow({ task, planType, allTasks }: Props) {
               <input
                 type="date"
                 onClick={(e) => e.stopPropagation()}
-                onChange={(e) => {
-                  updateTaskDates(task.id, e.target.value || null, task.end_date);
-                  router.refresh();
+                onChange={async (e) => {
+                  try {
+                    await updateTaskDates(task.id, e.target.value || null, task.end_date);
+                    toast.success("Start date updated");
+                    router.refresh();
+                  } catch (err) {
+                    toast.error("Failed to update start date");
+                  }
                 }}
                 value={task.start_date ? new Date(task.start_date).toISOString().split('T')[0] : ""}
                 className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-[10px] font-bold text-slate-700 outline-none focus:ring-1 focus:ring-brand-teal"
@@ -205,13 +261,74 @@ export default function TaskRow({ task, planType, allTasks }: Props) {
             </div>
           </div>
 
-          {/* Description */}
-          {task.description && (
+          {/* Edit form */}
+          {isEditing ? (
+            <div className="bg-slate-50 border border-slate-200 rounded-[24px] p-5 space-y-4" onClick={e => e.stopPropagation()}>
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Edit Task</h4>
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Name</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 outline-none focus:ring-2 focus:ring-brand-teal"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Owner</label>
+                <input
+                  type="text"
+                  value={editOwner}
+                  onChange={e => setEditOwner(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-brand-teal"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Description</label>
+                <textarea
+                  value={editDescription}
+                  onChange={e => setEditDescription(e.target.value)}
+                  rows={4}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-brand-teal resize-none"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Remarks</label>
+                <textarea
+                  value={editRemarks}
+                  onChange={e => setEditRemarks(e.target.value)}
+                  rows={2}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-brand-teal resize-none"
+                />
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={handleSaveEdit}
+                  disabled={isSavingEdit || !editName.trim()}
+                  className="bg-brand-teal text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 disabled:opacity-40 transition-all"
+                >
+                  {isSavingEdit ? "Saving..." : "Save Changes"}
+                </button>
+                <button
+                  onClick={() => {
+                    setIsEditing(false);
+                    setEditName(task.name);
+                    setEditOwner(task.owner);
+                    setEditDescription(task.description ?? "");
+                    setEditRemarks(task.remarks ?? "");
+                  }}
+                  className="bg-white border border-slate-200 text-slate-500 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : task.description ? (
             <div className="bg-white border border-slate-100 rounded-[24px] p-5">
               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Description</h4>
               <p className="text-sm text-slate-600 leading-relaxed font-medium whitespace-pre-line">{task.description}</p>
             </div>
-          )}
+          ) : null}
 
           {/* Dependencies / Blocking */}
           <div className="bg-white border border-slate-100 rounded-[24px] p-5">
@@ -236,8 +353,13 @@ export default function TaskRow({ task, planType, allTasks }: Props) {
 
                       const newBlockedBy = [...(task.blocked_by || []), val];
                       const { updateTaskBlockedBy } = await import("@/lib/queries");
-                      await updateTaskBlockedBy(task.id, newBlockedBy);
-                      router.refresh();
+                      try {
+                        await updateTaskBlockedBy(task.id, newBlockedBy);
+                        toast.success("Blocker added");
+                        router.refresh();
+                      } catch (err) {
+                        toast.error("Failed to add blocker");
+                      }
                     }}
                     value="none"
                   >
@@ -265,8 +387,13 @@ export default function TaskRow({ task, planType, allTasks }: Props) {
                           onClick={async () => {
                             const newBlockedBy = task.blocked_by.filter((_, idx) => idx !== i);
                             const { updateTaskBlockedBy } = await import("@/lib/queries");
-                            await updateTaskBlockedBy(task.id, newBlockedBy);
-                            router.refresh();
+                            try {
+                              await updateTaskBlockedBy(task.id, newBlockedBy);
+                              toast.success("Blocker removed");
+                              router.refresh();
+                            } catch (err) {
+                              toast.error("Failed to remove blocker");
+                            }
                           }}
                           className="hover:text-red-700 font-black"
                         >
