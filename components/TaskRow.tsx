@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import ConfirmModal from "./ConfirmModal";
+import TaskAttachments from "./TaskAttachments";
 
 interface Props {
   task: Task;
@@ -405,6 +406,12 @@ export default function TaskRow({ task, planType, allTasks }: Props) {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Attachments */}
+          <div className="bg-white border border-slate-100 rounded-[24px] p-5">
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Attachments</h4>
+            <TaskAttachments taskId={task.id} />
           </div>
 
           {/* Remarks Section (Original logic, repurposed) */}

@@ -30,7 +30,7 @@ export default function PlanView({ plan }: { plan: Plan }) {
   const router = useRouter();
   const { total, done, inProg, blocked } = calcStats(plan);
   const pct = total ? Math.round((done / total) * 100) : 0;
-  const isTech = plan.type === "product-tech";
+  const barColor = plan.color ?? "bg-brand-blue";
 
   async function handleAddPhase(e: React.FormEvent) {
     e.preventDefault();
@@ -58,7 +58,7 @@ export default function PlanView({ plan }: { plan: Plan }) {
         <div className="flex items-start justify-between gap-6 flex-wrap">
           <div className="flex-1 min-w-[300px]">
             <p className="text-[10px] font-black text-brand-teal uppercase tracking-[0.2em] mb-2">
-              {isTech ? "Technology" : "Operational"} Workstream
+              Workstream
             </p>
             <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-3">{plan.name}</h1>
 
@@ -113,7 +113,7 @@ export default function PlanView({ plan }: { plan: Plan }) {
         {/* Global progress bar */}
         <div className="mt-8 h-3 rounded-full bg-slate-50 overflow-hidden border border-slate-100 shadow-inner">
           <div
-            className={`h-full transition-all duration-1000 ${isTech ? 'bg-brand-blue' : 'bg-brand-pink'}`}
+            className={`h-full transition-all duration-1000 ${barColor}`}
             style={{ width: `${pct}%` }}
           />
         </div>

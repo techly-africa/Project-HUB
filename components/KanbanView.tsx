@@ -21,6 +21,7 @@ export default function KanbanView({ plan }: { plan: Plan }) {
     ];
 
     const allTasks = plan.phases.flatMap(ph => ph.tasks.map(t => ({ ...t, phaseName: ph.name })));
+    const activePhase = plan.phases.find(p => p.id === addingToPhaseId) ?? null;
 
     async function handleDrop(e: React.DragEvent, targetStatus: string) {
         e.preventDefault();
@@ -75,10 +76,12 @@ export default function KanbanView({ plan }: { plan: Plan }) {
                     </div>
 
                     <div className="space-y-4 flex-1">
-                        {addingToStatus === (col.id === 'todo' ? 'not_started' : col.id === 'wip' ? 'in_progress' : 'completed') && addingToPhaseId && (
+                        {addingToStatus === (col.id === 'todo' ? 'not_started' : col.id === 'wip' ? 'in_progress' : 'completed') && activePhase && (
                             <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                                 <AddTaskInline
-                                    phaseId={addingToPhaseId}
+                                    phaseId={activePhase.id}
+                                    phaseWbs={activePhase.wbs}
+                                    taskCount={activePhase.tasks.length}
                                     onCancel={() => setAddingToStatus(null)}
                                     onSuccess={() => setAddingToStatus(null)}
                                 />
@@ -86,7 +89,7 @@ export default function KanbanView({ plan }: { plan: Plan }) {
                                     <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Target Milestone</label>
                                     <select
                                         className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-[10px] font-bold text-slate-900 outline-none"
-                                        value={addingToPhaseId}
+                                        value={activePhase.id}
                                         onChange={(e) => setAddingToPhaseId(e.target.value)}
                                     >
                                         {plan.phases.map(ph => (

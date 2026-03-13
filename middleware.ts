@@ -1,13 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const ALLOWED_DOMAIN = "rukisha.co.rw";
 const PUBLIC_PATHS = ["/login", "/auth/callback"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Always allow public paths
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }
@@ -38,20 +36,9 @@ export async function middleware(request: NextRequest) {
     console.error("Middleware Auth Error:", userError);
   }
 
-  // Not logged in → redirect to login
   if (!user) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // Logged in but wrong domain → sign out and redirect
-  const email = user.email ?? "";
-  if (!email.endsWith(`@${ALLOWED_DOMAIN}`)) {
-    await supabase.auth.signOut();
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/login";
-    loginUrl.searchParams.set("error", "unauthorised");
     return NextResponse.redirect(loginUrl);
   }
 
@@ -59,5 +46,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|svg|ico|webp|woff2?|ttf)).*)"],
 };

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Task, TaskComment, Profile, TaskStatus as TStatus } from "@/lib/types";
 import { getTaskComments, addTaskComment, getProfiles, assignTask, setTaskDeadline, updateTaskDates, updateTaskStatus } from "@/lib/queries";
+import TaskAttachments from "./TaskAttachments";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -193,6 +194,12 @@ export default function TaskSidePanel({ task, isOpen, onClose }: Props) {
                             </div>
                         </div>
                     )}
+
+                    {/* Attachments */}
+                    <div className="space-y-3">
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Attachments</h3>
+                        <TaskAttachments taskId={task.id} />
+                    </div>
 
                     {/* Comments Discussion */}
                     <div className="space-y-4">

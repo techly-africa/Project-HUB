@@ -8,11 +8,31 @@ export type TaskStatus =
   | "not_applicable"
   | "critical";
 
+export interface Project {
+  id: string;
+  name: string;
+  description?: string | null;
+  start_date?: string | null;
+  target_date?: string | null;
+  created_at: string;
+}
+
 export interface Profile {
   id: string;
   email: string;
   full_name: string | null;
   avatar_url: string | null;
+}
+
+export interface TaskAttachment {
+  id: string;
+  task_id: string;
+  name: string;
+  storage_path: string;
+  size: number | null;
+  mime_type: string | null;
+  uploaded_by: string | null;
+  created_at: string;
 }
 
 export interface TaskComment {
@@ -54,8 +74,10 @@ export interface Phase {
 
 export interface Plan {
   id: string;
+  project_id: string;
   name: string;
-  type: PlanType;
+  type: string;
+  color: string;
   phases: Phase[];
 }
 
