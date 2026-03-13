@@ -29,14 +29,16 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const { data, error: userError } = await supabase.auth.getUser();
-  const user = data?.user;
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
 
-  if (userError) {
-    console.error("Middleware Auth Error:", userError);
-  }
-
-  if (!user) {
+    if (!user) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/login";
+      return NextResponse.redirect(loginUrl);
+    }
+  } catch (err) {
+    console.error("Middleware Auth Error:", err);
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     return NextResponse.redirect(loginUrl);
