@@ -1,13 +1,20 @@
 import { getProjects, getPlansByProject } from "@/lib/queries";
 import { getActiveProjectId } from "@/lib/active-project";
+import { getNotifications, getUnreadCount } from "@/lib/notifications";
 import BrandLogo from "./BrandLogo";
 import SignOutButton from "./SignOutButton";
 import ProjectSwitcher from "./ProjectSwitcher";
 import { SidebarLink } from "./SidebarLink";
 import NewWorkstreamButton from "./NewWorkstreamButton";
+import NotificationBell from "./NotificationBell";
 
 export default async function Sidebar() {
-  const [projects, rawActiveId] = await Promise.all([getProjects(), getActiveProjectId()]);
+  const [projects, rawActiveId, notifications, unreadCount] = await Promise.all([
+    getProjects(),
+    getActiveProjectId(),
+    getNotifications(),
+    getUnreadCount(),
+  ]);
 
   const activeProjectId = rawActiveId ?? projects[0]?.id ?? "";
   const plans = activeProjectId ? await getPlansByProject(activeProjectId) : [];
@@ -46,6 +53,7 @@ export default async function Sidebar() {
         </div>
 
         <SidebarLink href="/roadmap" label="Roadmap" icon="🗺️" />
+        <SidebarLink href="/settings" label="Settings" icon="⚙️" />
       </nav>
 
       <div className="px-6 pb-6 space-y-2">
@@ -64,8 +72,11 @@ export default async function Sidebar() {
         ))}
       </div>
 
-      <div className="px-6 pb-8 border-t border-white/5 pt-6">
-        <SignOutButton />
+      <div className="px-6 pb-8 border-t border-white/5 pt-6 flex items-center gap-3">
+        <div className="flex-1">
+          <SignOutButton />
+        </div>
+        <NotificationBell notifications={notifications} unreadCount={unreadCount} />
       </div>
     </aside>
   );

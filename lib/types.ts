@@ -8,12 +8,20 @@ export type TaskStatus =
   | "not_applicable"
   | "critical";
 
+export interface Organization {
+  id: string;
+  name: string;
+  domain: string | null;
+  created_at: string;
+}
+
 export interface Project {
   id: string;
   name: string;
   description?: string | null;
   start_date?: string | null;
   target_date?: string | null;
+  organization_id: string;
   created_at: string;
 }
 

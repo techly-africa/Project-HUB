@@ -1,7 +1,8 @@
 "use server";
 
 import { createSupabaseServerClient } from "./supabase-server";
-import type { Phase, Plan, PlanType, Profile, Project, ProjectStats, Task, TaskComment, TaskStatus } from "./types";
+import type { Organization, Phase, Plan, PlanType, Profile, Project, ProjectStats, Task, TaskComment, TaskStatus } from "./types";
+import { notifyTaskAssigned, notifyTaskComment, notifyTaskStatusChanged } from "./notifications";
 
 function handleSupabaseError(error: any) {
   if (error) {
@@ -75,9 +76,26 @@ export async function getProjects(): Promise<Project[]> {
   return (data ?? []) as Project[];
 }
 
+export async function getOrganization(): Promise<Organization | null> {
+  const sb = createSupabaseServerClient();
+  const { data, error } = await sb.from("organizations").select("*").maybeSingle();
+  if (error) return null; // table may not exist yet before migration 014 is applied
+  return (data ?? null) as Organization | null;
+}
+
 export async function createProject(name: string, description?: string): Promise<Project> {
   const sb = createSupabaseServerClient();
-  const { data, error } = await sb.from("projects").insert({ name, description: description ?? null }).select().single();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) throw new Error("Auth required");
+
+  const { data: profile } = await sb.from("profiles").select("organization_id").eq("id", user.id).single();
+  if (!profile?.organization_id) throw new Error("User has no organization assigned");
+
+  const { data, error } = await sb.from("projects").insert({
+    name,
+    description: description ?? null,
+    organization_id: profile.organization_id,
+  }).select().single();
   handleSupabaseError(error);
   return data as Project;
 }
@@ -204,6 +222,31 @@ export async function updateTaskStatus(id: string, status: TaskStatus) {
   const { error } = await sb.from("tasks")
     .update({ status, updated_at: new Date().toISOString() }).eq("id", id);
   handleSupabaseError(error);
+
+  // Fire notification best-effort (non-blocking)
+  void (async () => {
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) return;
+      const [{ data: task }, { data: updater }] = await Promise.all([
+        sb.from("tasks").select("name, assigned_to, phase_id").eq("id", id).single(),
+        sb.from("profiles").select("full_name, email").eq("id", user.id).single(),
+      ]);
+      if (!task?.assigned_to) return;
+      const { data: assignee } = await sb.from("profiles").select("id, email, full_name").eq("id", task.assigned_to).single();
+      if (!assignee) return;
+      await notifyTaskStatusChanged({
+        taskId: id,
+        taskName: task.name,
+        assigneeId: assignee.id,
+        assigneeEmail: assignee.email,
+        assigneeName: assignee.full_name,
+        newStatus: status,
+        updatedByName: updater?.full_name || updater?.email || "Someone",
+        updatedById: user.id,
+      });
+    } catch {}
+  })();
 }
 
 export async function updateTaskDates(id: string, start_date: string | null, end_date: string | null) {
@@ -249,6 +292,32 @@ export async function assignTask(taskId: string, profileId: string | null) {
   const sb = createSupabaseServerClient();
   const { error } = await sb.from("tasks").update({ assigned_to: profileId }).eq("id", taskId);
   handleSupabaseError(error);
+
+  if (!profileId) return;
+  void (async () => {
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) return;
+      const [{ data: task }, { data: assignee }, { data: assigner }] = await Promise.all([
+        sb.from("tasks").select("name, phase_id").eq("id", taskId).single(),
+        sb.from("profiles").select("id, email, full_name").eq("id", profileId).single(),
+        sb.from("profiles").select("full_name, email").eq("id", user.id).single(),
+      ]);
+      if (!task || !assignee) return;
+      const { data: phase } = await sb.from("phases").select("plan_id").eq("id", task.phase_id).single();
+      const { data: plan } = await sb.from("plans").select("project_id").eq("id", phase?.plan_id).single();
+      const { data: project } = await sb.from("projects").select("name").eq("id", plan?.project_id).single();
+      await notifyTaskAssigned({
+        taskId,
+        taskName: task.name,
+        assigneeId: assignee.id,
+        assigneeEmail: assignee.email,
+        assigneeName: assignee.full_name ?? assignee.email,
+        assignedByName: assigner?.full_name || assigner?.email || "Someone",
+        projectName: project?.name ?? "a project",
+      });
+    } catch {}
+  })();
 }
 
 export async function setTaskDeadline(taskId: string, deadline: string | null) {
@@ -265,6 +334,27 @@ export async function addTaskComment(taskId: string, content: string) {
   if (!user) throw new Error("Auth required");
   const { error } = await sb.from("task_comments").insert({ task_id: taskId, user_id: user.id, content });
   handleSupabaseError(error);
+
+  void (async () => {
+    try {
+      const [{ data: task }, { data: commenter }] = await Promise.all([
+        sb.from("tasks").select("name, assigned_to").eq("id", taskId).single(),
+        sb.from("profiles").select("full_name, email").eq("id", user.id).single(),
+      ]);
+      if (!task?.assigned_to || task.assigned_to === user.id) return;
+      const { data: assignee } = await sb.from("profiles").select("id, email, full_name").eq("id", task.assigned_to).single();
+      if (!assignee) return;
+      await notifyTaskComment({
+        taskId,
+        taskName: task.name,
+        assigneeId: assignee.id,
+        assigneeEmail: assignee.email,
+        assigneeName: assignee.full_name,
+        commenterName: commenter?.full_name || commenter?.email || "Someone",
+        commentBody: content,
+      });
+    } catch {}
+  })();
 }
 
 export async function getTaskComments(taskId: string): Promise<TaskComment[]> {

@@ -2,8 +2,6 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 
-const ALLOWED_DOMAIN = "rukisha.co.rw";
-
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
@@ -29,11 +27,20 @@ export async function GET(request: NextRequest) {
     const { error, data } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && data.user) {
-      const email = data.user.email ?? "";
-      if (!email.endsWith(`@${ALLOWED_DOMAIN}`)) {
+      // Accept users whose email domain matches a registered organization.
+      // The handle_new_user trigger sets organization_id on the profile automatically;
+      // a null organization_id means the domain isn't registered.
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("organization_id")
+        .eq("id", data.user.id)
+        .single();
+
+      if (!profile?.organization_id) {
         await supabase.auth.signOut();
         return NextResponse.redirect(`${origin}/login?error=unauthorised`);
       }
+
       return NextResponse.redirect(`${origin}${next}`);
     }
   }
