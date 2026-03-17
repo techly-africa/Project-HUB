@@ -9,27 +9,53 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        navy: {
-          DEFAULT: "#2D2D2D",
-          dark: "#1A1A1A",
-          light: "#404040",
+        background: {
+          primary:   "var(--color-bg-primary)",
+          secondary: "var(--color-bg-secondary)",
+        },
+        surface: {
+          DEFAULT:  "var(--color-surface)",
+          elevated: "var(--color-surface-elevated)",
+          hover:    "var(--color-surface-hover)",
+        },
+        border: {
+          subtle: "var(--color-border-subtle)",
+          medium: "var(--color-border-medium)",
+        },
+        accent: {
+          primary:   "var(--color-accent-primary)",
+          secondary: "var(--color-accent-secondary)",
+          warning:   "var(--color-accent-warning)",
+          success:   "var(--color-accent-success)",
+          danger:    "var(--color-accent-danger)",
         },
         brand: {
-          pink: "#F7A800",
-          teal: "#2bb4ca",
-          blue: "#1d70b8",
-          navy: "#2D2D2D",
-          orange: "#F7A800",
+          teal:  "#14b8a6",
+          pink:  "#db2777",
+          navy:  "#020617",
+          slate: "#0f172a",
         },
-        gold: {
-          DEFAULT: "#F7A800",
-          light: "#FDD060",
-          dark: "#C78600",
-        },
-        steel: "#4A7FA5",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
+      },
+      textColor: {
+        primary:   "var(--color-text-primary)",
+        secondary: "var(--color-text-secondary)",
+        muted:     "var(--color-text-muted)",
+        contrast:  "var(--color-text-contrast)", // white in dark, slate-900 in light
+      },
+      boxShadow: {
+        premium: "0 0 0 1px var(--color-border-subtle), 0 8px 24px -8px rgba(0,0,0,0.35)",
+      },
+      animation: {
+        shimmer: "shimmer 2s infinite linear",
+      },
+      keyframes: {
+        shimmer: {
+          "0%":   { backgroundPosition: "-1000px 0" },
+          "100%": { backgroundPosition: "1000px 0" },
+        },
       },
     },
   },

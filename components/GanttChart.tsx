@@ -32,12 +32,12 @@ const COLUMN_WIDTHS: Record<ZoomLevel, number> = {
   month: 150
 };
 
-const STATUS_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  not_started: { bg: "bg-slate-100/50", border: "border-slate-300", text: "text-slate-500" },
-  in_progress: { bg: "bg-blue-500/10", border: "border-blue-500", text: "text-blue-700" },
-  completed: { bg: "bg-emerald-500/10", border: "border-emerald-500", text: "text-emerald-700" },
-  blocked: { bg: "bg-red-500/10", border: "border-red-500", text: "text-red-700" },
-  critical: { bg: "bg-orange-500/10", border: "border-orange-500", text: "text-orange-700" },
+const STATUS_COLORS: Record<string, { bg: string; border: string; dot: string }> = {
+  not_started: { bg: "bg-slate-800/10", border: "border-slate-800", dot: "bg-slate-800" },
+  in_progress: { bg: "bg-accent-primary/10", border: "border-accent-primary/40", dot: "bg-accent-primary" },
+  completed: { bg: "bg-accent-success/10", border: "border-accent-success/40", dot: "bg-accent-success" },
+  blocked: { bg: "bg-accent-secondary/10", border: "border-accent-secondary/40", dot: "bg-accent-secondary" },
+  critical: { bg: "bg-accent-secondary/20", border: "border-accent-secondary", dot: "bg-accent-secondary" },
 };
 
 export default function GanttChart({ phases }: GanttChartProps) {
@@ -103,12 +103,30 @@ export default function GanttChart({ phases }: GanttChartProps) {
     }
   };
 
+  useEffect(() => {
+    if (mounted && gridRef.current) {
+      const today = new Date();
+      let offset = 0;
+      
+      if (zoom === "day") {
+        offset = differenceInDays(today, chartStart) * colWidth;
+      } else if (zoom === "week") {
+        offset = (differenceInDays(today, chartStart) / 7) * colWidth;
+      } else {
+        offset = (differenceInDays(today, chartStart) / 30.44) * colWidth;
+      }
+
+      const containerWidth = gridRef.current.clientWidth;
+      gridRef.current.scrollLeft = offset - containerWidth / 3;
+    }
+  }, [mounted, zoom, chartStart, colWidth]);
+
   const openTask = (t: Task) => {
     setSelectedTask(t);
     setIsPanelOpen(true);
   };
 
-  if (!mounted) return <div className="h-[600px] bg-slate-50/50 rounded-[32px] animate-pulse" />;
+  if (!mounted) return <div className="h-[600px] bg-surface-elevated rounded-[40px] animate-pulse" />;
 
   const Row = ({ index }: { index: number }) => {
     const item = flattenedItems[index];
@@ -117,12 +135,12 @@ export default function GanttChart({ phases }: GanttChartProps) {
 
     if (item.type === "phase") {
       return (
-        <div className="flex border-b border-slate-100 bg-slate-50/30" style={{ width: rowWidth }}>
-          <div className="w-64 flex-shrink-0 p-3 flex items-center gap-2 border-r border-slate-100 sticky left-0 bg-slate-50/80 backdrop-blur-sm z-20">
-            <span className={`w-1.5 h-1.5 rounded-full ${item.data.workstreamType === 'Product & Tech' ? 'bg-brand-blue' :
-              item.data.workstreamType === 'Legal' ? 'bg-amber-500' : 'bg-brand-pink'
+        <div className="flex border-b border-border-subtle bg-surface-elevated" style={{ width: rowWidth }}>
+          <div className="w-64 flex-shrink-0 p-4 flex items-center gap-3 border-r border-border-subtle sticky left-0 bg-surface/90 backdrop-blur-xl z-20">
+            <div className={`w-2 h-2 rounded-full shadow-[0_0_8px_currentColor] ${item.data.workstreamType === 'Product & Tech' ? 'text-accent-primary bg-accent-primary' :
+              item.data.workstreamType === 'Legal' ? 'text-accent-warning bg-accent-warning' : 'text-accent-secondary bg-accent-secondary'
               }`} />
-            <span className="text-[10px] font-black text-slate-900 truncate uppercase tracking-tight">{item.data.name}</span>
+            <span className="text-[10px] font-black text-white truncate uppercase tracking-widest">{item.data.name}</span>
           </div>
           <div className="flex-shrink-0 relative" style={{ width: timelineScale * colWidth }} />
         </div>
@@ -132,9 +150,9 @@ export default function GanttChart({ phases }: GanttChartProps) {
     const task = item.data;
     if (!task.start_date || !task.end_date) {
       return (
-        <div className="flex border-b border-slate-100 hover:bg-slate-50 transition-colors" style={{ width: rowWidth }}>
-          <div className="w-64 flex-shrink-0 p-3 pl-8 flex items-center border-r border-slate-100 sticky left-0 bg-white/80 backdrop-blur-sm z-20">
-            <span className="text-[11px] font-medium text-slate-400 italic">No dates set</span>
+        <div className="flex border-b border-border-subtle hover:bg-surface-elevated transition-colors" style={{ width: rowWidth }}>
+          <div className="w-64 flex-shrink-0 p-4 pl-10 flex items-center border-r border-border-subtle sticky left-0 bg-surface/80 backdrop-blur-md z-20">
+            <span className="text-xs font-bold text-muted italic">Schedule Pending</span>
           </div>
           <div className="flex-shrink-0 relative" style={{ width: timelineScale * colWidth }} />
         </div>
@@ -157,7 +175,6 @@ export default function GanttChart({ phases }: GanttChartProps) {
       left = (differenceInDays(tStart, chartStart) / 7) * colWidth;
       width = (duration / 7) * colWidth;
     } else {
-      // Month scale positioning is approximate but visually correct for long roadmaps
       left = (differenceInDays(tStart, chartStart) / 30.44) * colWidth;
       width = (duration / 30.44) * colWidth;
     }
@@ -165,12 +182,12 @@ export default function GanttChart({ phases }: GanttChartProps) {
     const statusStyle = STATUS_COLORS[task.status] || STATUS_COLORS.not_started;
 
     return (
-      <div className="flex border-b border-slate-50 hover:bg-slate-50/50 transition-colors group" style={{ width: rowWidth }}>
+      <div className="flex border-b border-border-subtle hover:bg-surface-elevated transition-colors group" style={{ width: rowWidth }}>
         <div
-          className="w-64 flex-shrink-0 p-3 pl-8 flex items-center border-r border-slate-100 cursor-pointer sticky left-0 bg-white group-hover:bg-slate-50 z-20 transition-colors shadow-[4px_0_8px_-4px_rgba(0,0,0,0.05)]"
+          className="w-64 flex-shrink-0 p-4 pl-10 flex items-center border-r border-border-subtle cursor-pointer sticky left-0 bg-surface group-hover:bg-surface-elevated z-20 transition-colors shadow-[8px_0_16px_-8px_rgba(0,0,0,0.5)]"
           onClick={() => openTask(task)}
         >
-          <span className="text-[11px] font-bold text-slate-600 truncate">{task.name}</span>
+          <span className="text-[12px] font-bold text-secondary truncate tracking-tight">{task.name}</span>
         </div>
 
         <div className="flex-shrink-0 relative" style={{ width: timelineScale * colWidth }}>
@@ -184,41 +201,44 @@ export default function GanttChart({ phases }: GanttChartProps) {
           ) : (
             <div
               onClick={() => openTask(task)}
-              className={`absolute top-1/2 -translate-y-1/2 h-6 rounded-lg border-2 shadow-sm transition-all cursor-pointer flex items-center px-2 z-10 hover:shadow-md 
-                ${statusStyle.bg} ${statusStyle.border} ${statusStyle.text}
+              className={`absolute top-1/2 -translate-y-1/2 h-5 rounded-full border-2 shadow-lg transition-all cursor-pointer flex items-center px-3 z-10 hover:brightness-110 hover:scale-y-110
+                ${statusStyle.bg} ${statusStyle.border}
               `}
-              style={{ left: left + 4, width: Math.max(width - 8, 20) }}
+              style={{ left: left + 6, width: Math.max(width - 12, 24) }}
             >
-              <span className="text-[8px] font-black uppercase tracking-tighter truncate">
+              <span className="text-[9px] font-black uppercase tracking-tighter truncate text-white opacity-80">
                 {duration > 5 ? task.name : ''}
               </span>
 
               {/* Enhanced Tooltip */}
-              <div className="absolute opacity-0 group-hover:opacity-100 bg-slate-900 text-white p-4 rounded-[20px] text-[10px] z-[100] pointer-events-none transition-opacity shadow-2xl w-64 -top-32 left-1/2 -translate-x-1/2 border border-white/10 backdrop-blur-lg backdrop-saturate-150">
-                <div className="space-y-3">
-                  <div className="flex justify-between items-start gap-3">
-                    <p className="font-black text-[13px] text-white leading-tight">{task.name}</p>
-                    <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-md border ${statusStyle.bg} ${statusStyle.border}`}>
+              <div className="absolute opacity-0 group-hover:opacity-100 bg-surface border border-border-medium p-5 rounded-3xl text-[10px] z-[100] pointer-events-none transition-all duration-300 shadow-premium w-72 -top-40 left-1/2 -translate-x-1/2 backdrop-blur-2xl scale-95 group-hover:scale-100">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-start gap-4">
+                    <p className="font-semibold text-sm text-contrast leading-tight">{task.name}</p>
+                    <span className={`text-[10px] font-medium px-2.5 py-1 rounded-lg border ${statusStyle.bg} ${statusStyle.border} text-white`}>
                       {task.status.replace('_', ' ')}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 border-t border-white/10 pt-3">
+                  <div className="grid grid-cols-2 gap-6 border-t border-border-subtle pt-4">
                     <div>
-                      <p className="text-slate-400 text-[8px] uppercase font-black mb-1">Timeline</p>
-                      <p className="text-white font-bold">{format(tStart, "MMM d")} – {format(tEnd, "MMM d")}</p>
+                      <p className="text-muted text-xs mb-1">Timeline</p>
+                      <p className="text-contrast font-semibold text-xs">{format(tStart, "MMM d")} — {format(tEnd, "MMM d")}</p>
                     </div>
                     <div>
-                      <p className="text-slate-400 text-[8px] uppercase font-black mb-1">Duration</p>
-                      <p className="text-white font-bold">{duration} Days</p>
+                      <p className="text-muted text-xs mb-1">Duration</p>
+                      <p className="text-contrast font-semibold text-xs">{duration} Days</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 border-t border-white/10 pt-3">
-                    <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[8px] font-black text-slate-300">
+                  <div className="flex items-center gap-3 border-t border-border-subtle pt-4">
+                    <div className="w-6 h-6 rounded-full bg-accent-primary/20 flex items-center justify-center text-[10px] font-semibold text-accent-primary border border-accent-primary/20">
                       {task.owner?.charAt(0) || "?"}
                     </div>
-                    <span className="text-slate-200 font-bold">{task.owner}</span>
+                    <div>
+                      <p className="text-contrast font-semibold text-xs">{task.owner}</p>
+                      <p className="text-xs text-muted">Owner</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -236,17 +256,17 @@ export default function GanttChart({ phases }: GanttChartProps) {
         const day = addDays(chartStart, i);
         const isFirst = day.getDate() === 1 || i === 0;
         headerItems.push(
-          <div key={i} className={`flex-shrink-0 h-14 border-r border-slate-100/50 flex flex-col items-center justify-center relative ${day.getDay() === 1 ? 'bg-slate-100/30' : ''}`} style={{ width: colWidth }}>
+          <div key={i} className={`flex-shrink-0 h-14 border-r border-border-subtle flex flex-col items-center justify-center relative ${day.getDay() === 1 ? 'bg-surface-elevated' : ''}`} style={{ width: colWidth }}>
             {isFirst && (
-              <span className="absolute top-1 left-2 text-[8px] font-black text-brand-blue uppercase bg-white/80 backdrop-blur-sm px-1.5 py-0.5 shadow-sm rounded-md z-10 whitespace-nowrap">
+              <span className="absolute top-1 left-2 text-[10px] font-semibold text-accent-primary bg-surface-elevated border border-border-subtle px-1.5 py-0.5 shadow-sm rounded-md z-10 whitespace-nowrap">
                 {format(day, "MMMM yyyy")}
               </span>
             )}
-            <span className={`text-[10px] font-black ${isToday(day) ? 'text-brand-pink' : 'text-slate-600'}`}>
+            <span className={`text-[10px] font-black ${isToday(day) ? 'text-accent-secondary' : 'text-slate-500'}`}>
               {format(day, "d")}
             </span>
-            <span className="text-[7px] text-slate-400 uppercase font-black opacity-50">{format(day, "EE").charAt(0)}</span>
-            {isToday(day) && <div className="absolute bottom-0 w-full h-0.5 bg-brand-pink" />}
+            <span className="text-[7px] text-muted uppercase font-black opacity-30">{format(day, "EE").charAt(0)}</span>
+            {isToday(day) && <div className="absolute bottom-0 w-full h-0.5 bg-accent-secondary shadow-[0_0_8px_rgba(219,39,119,0.5)]" />}
           </div>
         );
       }
@@ -254,11 +274,11 @@ export default function GanttChart({ phases }: GanttChartProps) {
       for (let i = 0; i < totalWeeks; i++) {
         const week = addWeeks(chartStart, i);
         headerItems.push(
-          <div key={i} className="flex-shrink-0 h-14 border-r border-slate-100/50 flex flex-col items-center justify-center relative px-2 bg-white" style={{ width: colWidth }}>
-            <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter mb-0.5">
+          <div key={i} className="flex-shrink-0 h-14 border-r border-border-subtle flex flex-col items-center justify-center relative px-2 bg-transparent" style={{ width: colWidth }}>
+            <span className="text-[9px] font-black text-muted uppercase tracking-tighter mb-0.5">
               Week {format(week, "w")}
             </span>
-            <span className="text-[10px] font-bold text-slate-900">
+            <span className="text-[10px] font-bold text-white">
               {format(week, "MMM d")}
             </span>
           </div>
@@ -268,9 +288,9 @@ export default function GanttChart({ phases }: GanttChartProps) {
       const months = eachMonthOfInterval({ start: chartStart, end: chartEnd });
       months.forEach((month, i) => {
         headerItems.push(
-          <div key={i} className="flex-shrink-0 h-14 border-r border-slate-100/50 flex flex-col items-center justify-center bg-white" style={{ width: colWidth }}>
-            <span className="text-[12px] font-black text-brand-blue uppercase tracking-widest">{format(month, "MMM")}</span>
-            <span className="text-[9px] font-bold text-slate-400">{format(month, "yyyy")}</span>
+          <div key={i} className="flex-shrink-0 h-14 border-r border-border-subtle flex flex-col items-center justify-center bg-transparent" style={{ width: colWidth }}>
+            <span className="text-[12px] font-black text-accent-primary uppercase tracking-widest">{format(month, "MMM")}</span>
+            <span className="text-[9px] font-black text-muted tracking-widest">{format(month, "yyyy")}</span>
           </div>
         );
       });
@@ -279,26 +299,26 @@ export default function GanttChart({ phases }: GanttChartProps) {
   };
 
   return (
-    <div className="bg-white rounded-[40px] border border-slate-100 shadow-2xl shadow-slate-200/20 overflow-hidden flex flex-col h-[700px] group/gantt relative">
+    <div className="bg-surface rounded-[40px] border border-border-subtle shadow-premium overflow-hidden flex flex-col h-[750px] group/gantt relative">
       {/* Header Axis */}
-      <div className="flex border-b border-slate-100 bg-slate-50/50 flex-shrink-0">
-        <div className="w-64 flex-shrink-0 border-r border-slate-100 p-6 flex flex-col justify-center z-30 bg-slate-50/80 backdrop-blur-md">
-          <p className="text-[8px] font-black text-brand-teal uppercase tracking-[0.2em] mb-1">Project Hub</p>
-          <h4 className="text-[11px] font-black text-slate-900 uppercase tracking-widest leading-none">Strategy & Timeline</h4>
+      <div className="flex border-b border-border-subtle bg-surface flex-shrink-0">
+        <div className="w-64 flex-shrink-0 border-r border-border-subtle p-8 flex flex-col justify-center z-30 bg-surface/95 backdrop-blur-md">
+          <p className="text-[9px] font-black text-accent-primary uppercase tracking-[0.3em] mb-1 leading-none">System Telemetry</p>
+          <h4 className="text-[12px] font-black text-white uppercase tracking-[0.1em] leading-none">Strategy Matrix</h4>
         </div>
         <div ref={headerRef} className="flex-1 overflow-x-hidden relative scroll-smooth no-scrollbar">
           <div className="flex h-14" style={{ width: timelineScale * colWidth }}>
             {renderHeader()}
           </div>
         </div>
-        <div className="flex-shrink-0 flex items-center gap-1 px-3 border-l border-slate-100 bg-slate-50/80">
+        <div className="flex-shrink-0 flex items-center gap-2 px-6 border-l border-border-subtle bg-surface/95">
           {(["day", "week", "month"] as ZoomLevel[]).map((level) => (
             <button
               key={level}
               onClick={() => setZoom(level)}
-              className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${zoom === level
-                ? "bg-brand-blue text-white shadow-lg shadow-brand-blue/20"
-                : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${zoom === level
+                ? "bg-accent-primary text-[#020617] shadow-[0_0_12px_rgba(20,184,166,0.3)]"
+                : "text-muted hover:text-contrast hover:bg-surface-elevated"
                 }`}
             >
               {level}
@@ -308,10 +328,19 @@ export default function GanttChart({ phases }: GanttChartProps) {
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-auto no-scrollbar" onScroll={handleScroll}>
-        {flattenedItems.map((_, index) => (
-          <Row key={index} index={index} />
-        ))}
+      <div 
+        ref={gridRef}
+        className="flex-1 overflow-auto no-scrollbar scroll-smooth relative" 
+        onScroll={handleScroll}
+      >
+        {/* Subtle mesh overlay */}
+        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,1) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
+        
+        <div className="relative z-10">
+          {flattenedItems.map((_, index) => (
+            <Row key={index} index={index} />
+          ))}
+        </div>
       </div>
 
       <TaskSidePanel

@@ -141,13 +141,13 @@ export default function TaskRow({ task, planType, allTasks }: Props) {
         onClick={() => setOpen((o) => !o)}
       >
         {/* WBS */}
-        <span className={`text-[10px] font-bold font-mono pt-1 w-8 shrink-0 ${isBlocked ? "text-red-300" : "text-slate-300"}`}>{task.wbs}</span>
+        <span className={`text-[10px] font-bold font-mono pt-1 w-8 shrink-0 ${isBlocked ? "text-red-400" : "text-slate-400"}`}>{task.wbs}</span>
 
         {/* Name */}
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-bold leading-snug tracking-tight 
-            ${task.status === "not_applicable" ? "line-through text-slate-300" : ""}
-            ${isBlocked ? "text-red-900" : "text-slate-800"}
+            ${task.status === "not_applicable" ? "line-through text-slate-400" : ""}
+            ${isBlocked ? "text-red-950" : "text-slate-900"}
           `}>
             {task.name}
           </p>
@@ -163,7 +163,7 @@ export default function TaskRow({ task, planType, allTasks }: Props) {
                 {task.assignee.email.split('@')[0]}
               </p>
             ) : (
-              <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Unassigned</p>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Unassigned</p>
             )}
 
             {task.deadline && (

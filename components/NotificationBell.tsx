@@ -5,6 +5,7 @@ import type { Notification } from "@/lib/notifications";
 import { markAllReadAction, markNotificationReadAction } from "@/lib/notifications";
 import { formatDistanceToNow } from "date-fns";
 import { useRouter } from "next/navigation";
+import NotificationModal from "./NotificationModal";
 
 const TYPE_ICON: Record<string, string> = {
   task_assigned: "👤",
@@ -12,6 +13,7 @@ const TYPE_ICON: Record<string, string> = {
   task_status:   "🔄",
   task_deadline: "⏰",
   invite:        "✉️",
+  payment:       "💳",
 };
 
 interface Props {
@@ -21,6 +23,7 @@ interface Props {
 
 export default function NotificationBell({ notifications, unreadCount }: Props) {
   const [open, setOpen]           = useState(false);
+  const [activeNotification, setActiveNotification] = useState<Notification | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -32,11 +35,8 @@ export default function NotificationBell({ notifications, unreadCount }: Props) 
   }
 
   function handleClick(n: Notification) {
-    startTransition(async () => {
-      if (!n.read) await markNotificationReadAction(n.id);
-      setOpen(false);
-      router.refresh();
-    });
+    setActiveNotification(n);
+    setOpen(false);
   }
 
   return (
@@ -110,6 +110,11 @@ export default function NotificationBell({ notifications, unreadCount }: Props) 
           </div>
         </>
       )}
+
+      <NotificationModal 
+        notification={activeNotification} 
+        onClose={() => setActiveNotification(null)} 
+      />
     </div>
   );
 }

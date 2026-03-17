@@ -15,7 +15,7 @@ export interface Notification {
   created_at: string;
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://rukisha.co.rw";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://hub.avel.africa";
 
 // ─── Read ─────────────────────────────────────────────────────────────────────
 

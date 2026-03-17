@@ -5,7 +5,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase-admin";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { sendEmail, inviteEmail, passwordResetEmail } from "@/lib/email";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://rukisha.co.rw";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://hub.avel.africa";
 
 // ─── Invite a new user ────────────────────────────────────────────────────────
 
@@ -46,8 +46,8 @@ export async function inviteUserAction(email: string, fullName?: string) {
   const inviteLink = data.properties?.action_link ?? APP_URL;
   await sendEmail({
     to: email,
-    subject: `You've been invited to ${org?.name ?? "Rukisha"}`,
-    html: inviteEmail({ orgName: org?.name ?? "Rukisha", inviteLink }),
+    subject: `You've been invited to ${org?.name ?? "Project Hub"}`,
+    html: inviteEmail({ orgName: org?.name ?? "Project Hub", inviteLink }),
   });
   revalidatePath("/settings");
 }
@@ -78,7 +78,7 @@ export async function resetUserPasswordAction(userId: string, userEmail: string,
   const resetLink = data.properties?.action_link ?? APP_URL;
   await sendEmail({
     to: userEmail,
-    subject: "Reset your Rukisha password",
+    subject: "Reset your Project Hub password",
     html: passwordResetEmail({ recipientName: userName || userEmail, resetLink }),
   });
 }

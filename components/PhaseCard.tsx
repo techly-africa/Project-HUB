@@ -8,6 +8,7 @@ import type { Phase, Task } from "@/lib/types";
 import PhaseProgress from "./PhaseProgress";
 import TaskRow from "./TaskRow";
 import ConfirmModal from "./ConfirmModal";
+import AddTaskInline from "./AddTaskInline";
 
 export default function PhaseCard({ phase, planType, allTasks }: { phase: Phase; planType: string; allTasks: Task[] }) {
   const router = useRouter();
@@ -58,7 +59,7 @@ export default function PhaseCard({ phase, planType, allTasks }: { phase: Phase;
         >
           {phase.wbs}
         </span>
-        <span className="flex-1 font-bold text-slate-900 text-sm tracking-tight">{phase.name}</span>
+        <span className="flex-1 font-bold text-slate-950 text-sm tracking-tight">{phase.name}</span>
 
         {hasTasks && (
           <div className="flex-1 max-w-xs hidden md:block">
@@ -66,7 +67,7 @@ export default function PhaseCard({ phase, planType, allTasks }: { phase: Phase;
           </div>
         )}
 
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 ml-2 shrink-0">{phase.tasks.length} tasks</span>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-2 shrink-0">{phase.tasks.length} tasks</span>
 
         <button
           onClick={(e) => {
@@ -106,4 +107,3 @@ export default function PhaseCard({ phase, planType, allTasks }: { phase: Phase;
   );
 }
 
-import AddTaskInline from "./AddTaskInline";

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { addDocument, deleteDocument } from "@/lib/queries";
+import { addDocument, deleteDocument, createFolder, deleteFolder, moveDocument } from "@/lib/queries";
 
 export async function addDocumentAction(payload: {
   name: string;
@@ -10,15 +10,33 @@ export async function addDocumentAction(payload: {
   mime_type: string | null;
   source: "direct" | "task";
   task_attachment_id?: string | null;
+  folder_id?: string | null;
 }) {
   const doc = await addDocument(payload);
-  revalidatePath("/repository");
+  revalidatePath("/documents");
   return doc;
 }
 
-// storagePath is passed so the client can delete the storage object after this resolves.
-// Direct uploads are removed from storage client-side; task-linked docs leave the original intact.
 export async function deleteDocumentAction(id: string) {
   await deleteDocument(id);
-  revalidatePath("/repository");
+  revalidatePath("/documents");
+}
+
+export async function createFolderAction(payload: {
+  name: string;
+  parent_id: string | null;
+}) {
+  const folder = await createFolder(payload);
+  revalidatePath("/documents");
+  return folder;
+}
+
+export async function deleteFolderAction(id: string) {
+  await deleteFolder(id);
+  revalidatePath("/documents");
+}
+
+export async function moveDocumentAction(id: string, folder_id: string | null) {
+  await moveDocument(id, folder_id);
+  revalidatePath("/documents");
 }

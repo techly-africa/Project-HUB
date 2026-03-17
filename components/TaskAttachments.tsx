@@ -54,8 +54,19 @@ export default function TaskAttachments({ taskId }: { taskId: string }) {
 
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop();
-      const path = `${taskId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      // Resolve org_id so the storage path is scoped to the organisation.
+      // The storage bucket policy enforces that (foldername(name))[1] = user_org_id().
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) throw new Error("Auth required");
+      const { data: profile } = await sb
+        .from("profiles")
+        .select("organization_id")
+        .eq("id", user.id)
+        .single();
+      const orgId = profile?.organization_id;
+      if (!orgId) throw new Error("No organization found");
+
+      const path = `${orgId}/${taskId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
 
       const { error: uploadError } = await sb.storage.from(BUCKET).upload(path, file, {
         contentType: file.type,

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createTask } from "@/lib/queries";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Plus, X, Save } from "lucide-react";
 
 export default function AddTaskInline({ phaseId, phaseWbs, taskCount, onCancel, onSuccess }: { phaseId: string; phaseWbs: string; taskCount: number; onCancel?: () => void; onSuccess?: () => void }) {
     const [isAdding, setIsAdding] = useState(!onCancel);
@@ -17,7 +18,7 @@ export default function AddTaskInline({ phaseId, phaseWbs, taskCount, onCancel, 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         if (!name || !startDate || !endDate) {
-            toast.error("Task name, Start Date, and End Date are required.");
+            toast.error("Asset Name, Start Date, and Deadline are required.");
             return;
         }
         const wbs = `${phaseWbs}.${taskCount + 1}`;
@@ -30,11 +31,11 @@ export default function AddTaskInline({ phaseId, phaseWbs, taskCount, onCancel, 
             setEndDate("");
             if (onCancel) setIsAdding(false);
             if (onSuccess) onSuccess();
-            toast.success("Task created");
+            toast.success("Task synchronized successfully");
             router.refresh();
         } catch (err) {
             console.error(err);
-            toast.error("Failed to create task.");
+            toast.error("Synchronization failure");
         } finally {
             setIsLoading(false);
         }
@@ -44,46 +45,48 @@ export default function AddTaskInline({ phaseId, phaseWbs, taskCount, onCancel, 
         return (
             <button
                 onClick={() => setIsAdding(true)}
-                className="w-full py-3 px-5 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-brand-teal transition-colors text-left flex items-center gap-2"
+                className="w-full py-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-muted hover:text-accent-primary hover:bg-surface-elevated rounded-2xl transition-all text-left flex items-center gap-3 group border border-transparent hover:border-border-subtle"
             >
-                <span className="text-sm">+</span> Add Task
+                <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" /> Add Task Object
             </button>
         );
     }
 
     return (
-        <form onSubmit={handleSubmit} className="px-5 py-6 bg-slate-50/50 space-y-4 animate-in slide-in-from-top-1 duration-200 rounded-2xl border border-slate-100 mt-2">
-            <div className="flex gap-3 items-center">
-                <span className="text-[10px] font-black text-slate-400 font-mono bg-slate-100 px-2.5 py-2 rounded-xl shrink-0">
+        <form onSubmit={handleSubmit} className="px-6 py-8 bg-surface border border-border-medium space-y-6 animate-in fade-in slide-in-from-top-2 duration-300 rounded-[2rem] shadow-2xl relative overflow-hidden">
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-accent-primary/20 to-transparent" />
+            
+            <div className="flex gap-4 items-center">
+                <span className="text-[10px] font-black text-muted font-mono bg-surface-elevated px-3 py-2.5 rounded-xl border border-border-subtle shrink-0">
                     {phaseWbs}.{taskCount + 1}
                 </span>
                 <input
                     autoFocus
                     required
-                    placeholder="Task Name..."
-                    className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2 text-[10px] font-bold text-slate-900 focus:ring-1 focus:ring-brand-teal outline-none"
+                    placeholder="Identify task..."
+                    className="flex-1 bg-background-secondary border border-border-subtle rounded-xl px-5 py-3 text-xs font-bold text-primary focus:outline-none focus:ring-2 ring-accent-primary/20 transition-all placeholder:text-muted"
                     value={name}
                     onChange={e => setName(e.target.value)}
                 />
             </div>
 
-            <div className="flex gap-3 flex-wrap">
+            <div className="flex gap-4 flex-wrap">
                 <div className="flex-1 min-w-[140px]">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1 ml-1">Start Date</label>
+                    <label className="text-[9px] font-black text-muted uppercase tracking-widest block mb-2 ml-1">Commencement</label>
                     <input
                         type="date"
                         required
-                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-[10px] font-bold text-slate-900 focus:ring-1 focus:ring-brand-teal outline-none"
+                        className="w-full bg-background-secondary border border-border-subtle rounded-xl px-4 py-3 text-[10px] font-bold text-primary focus:outline-none focus:ring-2 ring-accent-primary/20 transition-all"
                         value={startDate}
                         onChange={e => setStartDate(e.target.value)}
                     />
                 </div>
                 <div className="flex-1 min-w-[140px]">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1 ml-1">End Date (Deadline)</label>
+                    <label className="text-[9px] font-black text-muted uppercase tracking-widest block mb-2 ml-1">Deadline</label>
                     <input
                         type="date"
                         required
-                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-[10px] font-bold text-slate-900 focus:ring-1 focus:ring-brand-teal outline-none"
+                        className="w-full bg-background-secondary border border-border-subtle rounded-xl px-4 py-3 text-[10px] font-bold text-primary focus:outline-none focus:ring-2 ring-accent-primary/20 transition-all"
                         value={endDate}
                         onChange={e => setEndDate(e.target.value)}
                     />
@@ -91,13 +94,13 @@ export default function AddTaskInline({ phaseId, phaseWbs, taskCount, onCancel, 
             </div>
 
             <textarea
-                placeholder="Optional description..."
-                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-[10px] font-bold text-slate-900 focus:ring-1 focus:ring-brand-teal outline-none resize-none h-20"
+                placeholder="Optional telemetry or metadata description..."
+                className="w-full bg-background-secondary border border-border-subtle rounded-xl px-5 py-3 text-xs font-bold text-primary focus:outline-none focus:ring-2 ring-accent-primary/20 transition-all placeholder:text-muted resize-none h-24"
                 value={description}
                 onChange={e => setDescription(e.target.value)}
             />
 
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-3 pt-2">
                 {onCancel && (
                     <button
                         type="button"
@@ -105,16 +108,20 @@ export default function AddTaskInline({ phaseId, phaseWbs, taskCount, onCancel, 
                             setIsAdding(false);
                             onCancel();
                         }}
-                        className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-white transition-all"
+                        className="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-muted hover:text-contrast hover:bg-surface-elevated transition-all"
                     >
-                        Cancel
+                        Esc
                     </button>
                 )}
                 <button
                     disabled={isLoading}
-                    className="bg-brand-teal text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-brand-teal/10"
+                    className="bg-accent-primary text-white dark:text-slate-950 px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-accent-primary/90 transition-all shadow-[0_0_20px_rgba(20,184,166,0.2)] disabled:opacity-50 flex items-center gap-2"
                 >
-                    {isLoading ? "..." : "Save Task"}
+                    {isLoading ? "..." : (
+                        <>
+                            <Save className="w-3 h-3" /> Save Object
+                        </>
+                    )}
                 </button>
             </div>
         </form>

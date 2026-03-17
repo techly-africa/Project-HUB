@@ -1,7 +1,7 @@
 "use server";
 
 import { createSupabaseServerClient } from "./supabase-server";
-import type { Document, Organization, Phase, Plan, PlanType, Profile, Project, ProjectStats, Task, TaskAttachmentWithContext, TaskComment, TaskStatus, TaskStatusConfig } from "./types";
+import type { Document, DocumentFolder, Organization, Phase, Plan, PlanType, Profile, Project, ProjectStats, Task, TaskAttachmentWithContext, TaskComment, TaskStatus, TaskStatusConfig } from "./types";
 import { notifyTaskAssigned, notifyTaskComment, notifyTaskMention, notifyTaskStatusChanged } from "./notifications";
 
 function handleSupabaseError(error: any) {
@@ -92,9 +92,27 @@ export async function getProjects(): Promise<Project[]> {
 
 export async function getOrganization(): Promise<Organization | null> {
   const sb = createSupabaseServerClient();
-  const { data, error } = await sb.from("organizations").select("*").maybeSingle();
-  if (error) return null; // table may not exist yet before migration 014 is applied
-  return (data ?? null) as Organization | null;
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return null;
+    // Resolve the caller's org_id first — never rely on RLS returning exactly
+    // one row, which would silently break in a true multi-org world.
+    const { data: profile } = await sb
+      .from("profiles")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+    if (!profile?.organization_id) return null;
+    const { data, error } = await sb
+      .from("organizations")
+      .select("*")
+      .eq("id", profile.organization_id)
+      .maybeSingle();
+    if (error) return null; // table may not exist yet before migration 014 is applied
+    return (data ?? null) as Organization | null;
+  } catch {
+    return null;
+  }
 }
 
 export async function createProject(name: string, description?: string): Promise<Project> {
@@ -462,6 +480,46 @@ export async function getDocuments(): Promise<Document[]> {
   return (data ?? []) as Document[];
 }
 
+export async function getFolders(): Promise<DocumentFolder[]> {
+  const sb = createSupabaseServerClient();
+  const { data, error } = await sb
+    .from("document_folders")
+    .select("*")
+    .order("name");
+  handleSupabaseError(error);
+  return (data ?? []) as DocumentFolder[];
+}
+
+export async function createFolder(payload: {
+  name: string;
+  parent_id: string | null;
+}): Promise<DocumentFolder> {
+  const sb = createSupabaseServerClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) throw new Error("Auth required");
+  const { data: profile } = await sb.from("profiles").select("organization_id").eq("id", user.id).single();
+  if (!profile?.organization_id) throw new Error("No organization found");
+  const { data, error } = await sb
+    .from("document_folders")
+    .insert({ ...payload, organization_id: profile.organization_id, created_by: user.id })
+    .select()
+    .single();
+  handleSupabaseError(error);
+  return data as DocumentFolder;
+}
+
+export async function deleteFolder(id: string) {
+  const sb = createSupabaseServerClient();
+  const { error } = await sb.from("document_folders").delete().eq("id", id);
+  handleSupabaseError(error);
+}
+
+export async function moveDocument(id: string, folder_id: string | null) {
+  const sb = createSupabaseServerClient();
+  const { error } = await sb.from("documents").update({ folder_id }).eq("id", id);
+  handleSupabaseError(error);
+}
+
 export async function addDocument(payload: {
   name: string;
   storage_path: string;
@@ -469,6 +527,7 @@ export async function addDocument(payload: {
   mime_type: string | null;
   source: "direct" | "task";
   task_attachment_id?: string | null;
+  folder_id?: string | null;
 }): Promise<Document> {
   const sb = createSupabaseServerClient();
   const { data: { user } } = await sb.auth.getUser();

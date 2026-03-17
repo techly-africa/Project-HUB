@@ -2,14 +2,159 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/* Fix for 404 layout.css and styling regressions */
 
-* { box-sizing: border-box; }
+/* ── Dark theme (default) ───────────────────────────── */
+:root {
+  --color-bg-primary:     #020617;
+  --color-bg-secondary:   #0f172a;
+
+  --color-surface:          rgba(255, 255, 255, 0.03);
+  --color-surface-elevated: rgba(255, 255, 255, 0.06);
+  --color-surface-hover:    rgba(255, 255, 255, 0.08);
+
+  --color-border-subtle: rgba(255, 255, 255, 0.08);
+  --color-border-medium: rgba(255, 255, 255, 0.13);
+
+  --color-accent-primary:   #14b8a6;
+  --color-accent-secondary: #db2777;
+  --color-accent-warning:   #f59e0b;
+  --color-accent-success:   #22c55e;
+  --color-accent-danger:    #ef4444;
+
+  --color-text-primary:   #f1f5f9;
+  --color-text-secondary: #a8b8cc;
+  --color-text-muted:     #7a8ea4;
+  --color-text-contrast:  #f1f5f9; /* high-contrast fg; white in dark */
+}
+
+/* ── Light theme ────────────────────────────────────── */
+.light {
+  --color-bg-primary:     #f8fafc;
+  --color-bg-secondary:   #f1f5f9;
+
+  --color-surface:          #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-surface-hover:    #f8fafc;
+
+  --color-border-subtle: rgba(15, 23, 42, 0.07);
+  --color-border-medium: rgba(15, 23, 42, 0.13);
+
+  /* Slightly darkened accents so they pass contrast on white */
+  --color-accent-primary:   #0d9488;
+  --color-accent-secondary: #be185d;
+  --color-accent-warning:   #d97706;
+  --color-accent-success:   #16a34a;
+  --color-accent-danger:    #dc2626;
+
+  --color-text-primary:   #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted:     #64748b;
+  --color-text-contrast:  #0f172a; /* high-contrast fg; dark in light */
+}
+
+/* Force dark values for specific sections (e.g., Sidebar) */
+.sidebar-dark {
+  --color-bg-primary:     #020617;
+  --color-bg-secondary:   #0f172a;
+  --color-surface:          rgba(255, 255, 255, 0.03);
+  --color-surface-elevated: rgba(255, 255, 255, 0.06);
+  --color-surface-hover:    rgba(255, 255, 255, 0.08);
+  --color-border-subtle: rgba(255, 255, 255, 0.08);
+  --color-border-medium: rgba(255, 255, 255, 0.13);
+  --color-text-primary:   #f1f5f9;
+  --color-text-secondary: #a8b8cc;
+  --color-text-muted:     #7a8ea4;
+  --color-text-contrast:  #f1f5f9;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  color-scheme: dark;
+}
+html.light {
+  color-scheme: light;
+}
 
 body {
   font-family: 'Inter', system-ui, sans-serif;
-  background-color: #F0F4F8;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  line-height: 1.5;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
+
+/* Typography helpers */
+.heading-xl { @apply text-2xl font-semibold tracking-tight leading-tight; }
+.heading-lg { @apply text-lg font-medium leading-snug; }
+.data-large { @apply text-3xl font-semibold tracking-tighter; }
+.text-micro  { @apply text-[10px] font-medium; }
+
+.interactive-hover {
+  @apply transition-all duration-200 ease-out hover:scale-[1.02] active:scale-[0.98];
+}
+
+/* Glass morphism — uses CSS vars so it works in both themes */
+.glass-morphism {
+  backdrop-filter: blur(12px);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+}
+
+/* Utilities */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .glass-card-dark {
+    background: rgba(2, 6, 23, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .storage-gradient {
+    background: linear-gradient(90deg, #14b8a6 0%, #10b981 100%);
+  }
+
+  .shimmer-glow {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer-glow::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
 
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+.text-gradient-teal {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-emerald-400;
+}

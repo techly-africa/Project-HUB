@@ -49,19 +49,22 @@ export default function NewWorkstreamButton({ projectId }: { projectId: string }
 
       {open && (
         <div
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
+          className="fixed inset-0 bg-background-primary/80 backdrop-blur-xl z-[200] flex items-center justify-center p-4 animate-in fade-in duration-300"
           onClick={() => setOpen(false)}
         >
           <form
             onSubmit={handleSubmit}
-            className="bg-white rounded-[32px] p-8 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200"
+            className="bg-background-secondary border border-border-subtle rounded-[32px] p-8 w-full max-w-md shadow-premium relative overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
-            <h2 className="text-xl font-black text-slate-900 tracking-tight mb-6">New Workstream</h2>
+            {/* Decoration */}
+            <div className="absolute -top-12 -right-12 w-32 h-32 bg-accent-primary/5 blur-3xl rounded-full" />
+            
+            <h2 className="text-xl font-bold text-white tracking-tight mb-6">New Workstream</h2>
 
             <div className="space-y-5">
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block px-1">
+                <label className="text-[10px] font-black text-muted uppercase tracking-widest mb-1.5 block px-1">
                   Name
                 </label>
                 <input
@@ -70,12 +73,12 @@ export default function NewWorkstreamButton({ projectId }: { projectId: string }
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="e.g. Product & Technology"
-                  className="w-full bg-slate-50 rounded-2xl px-5 py-3 text-sm font-bold text-slate-900 placeholder:text-slate-300 outline-none focus:ring-2 focus:ring-brand-teal transition-all"
+                  className="w-full bg-surface border border-border-subtle rounded-2xl px-5 py-3 text-sm font-medium text-white placeholder:text-muted outline-none focus:border-accent-primary/50 focus:ring-4 focus:ring-accent-primary/10 transition-all"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-1">
+                <label className="text-[10px] font-black text-muted uppercase tracking-widest mb-2 block px-1">
                   Color
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -97,7 +100,7 @@ export default function NewWorkstreamButton({ projectId }: { projectId: string }
                 {/* Preview */}
                 <div className="mt-3 flex items-center gap-2">
                   <span className={`w-2.5 h-2.5 rounded-full ${color}`} />
-                  <span className="text-xs text-slate-500 font-medium">{name || "Workstream name"}</span>
+                  <span className="text-xs text-secondary font-medium">{name || "Workstream name"}</span>
                 </div>
               </div>
             </div>
@@ -106,7 +109,7 @@ export default function NewWorkstreamButton({ projectId }: { projectId: string }
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="flex-1 bg-slate-100 text-slate-500 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+                className="flex-1 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-secondary hover:bg-surface border border-transparent hover:border-border-subtle transition-all"
               >
                 Cancel
               </button>

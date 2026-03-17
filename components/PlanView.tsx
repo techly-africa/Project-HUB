@@ -63,10 +63,10 @@ export default function PlanView({ plan }: { plan: Plan }) {
       <div className="mb-8">
         <div className="flex items-start justify-between gap-6 flex-wrap">
           <div className="flex-1 min-w-[300px]">
-            <p className="text-[10px] font-black text-brand-teal uppercase tracking-[0.2em] mb-2">
+            <p className="text-[10px] font-black text-brand-teal uppercase tracking-[0.2em] mb-2 drop-shadow-sm">
               Workstream
             </p>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-3">{plan.name}</h1>
+            <h1 className="text-3xl font-black text-white tracking-tight leading-none mb-3 drop-shadow-md">{plan.name}</h1>
 
             {/* View Switcher */}
             <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-fit mt-6">
@@ -98,18 +98,18 @@ export default function PlanView({ plan }: { plan: Plan }) {
             {/* Progress widget */}
             <div className="flex items-center gap-6 bg-white rounded-3xl border border-slate-100 px-8 py-5 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
               <div className="text-center">
-                <p className="text-4xl font-black text-slate-900 tracking-tighter">{pct}%</p>
-                <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest mt-1">Complete</p>
+                <p className="text-4xl font-black text-slate-950 tracking-tighter">{pct}%</p>
+                <p className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mt-1">Complete</p>
               </div>
               <div className="w-px h-10 bg-slate-100" />
               <div className="space-y-2 text-[10px] font-black uppercase tracking-wider">
                 <div className="flex items-center gap-3">
                   <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span className="text-slate-500">{done} Success</span>
+                  <span className="text-slate-600">{done} Success</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="w-2 h-2 rounded-full bg-brand-blue" />
-                  <span className="text-slate-500">{inProg} Active</span>
+                  <span className="text-slate-600">{inProg} Active</span>
                 </div>
               </div>
             </div>

@@ -1,7 +1,7 @@
 import sgMail from "@sendgrid/mail";
 
 const FROM_EMAIL = "noreply@avel.africa";
-const FROM_NAME  = "Rukisha Project Tracker";
+const FROM_NAME  = "Project Hub";
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY ?? "");
 
@@ -29,16 +29,31 @@ export async function sendEmail({ to, subject, html }: EmailPayload) {
 function baseTemplate(content: string) {
   return `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
-  <div style="max-width:560px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08)">
-    <div style="background:#0a1628;padding:28px 32px">
-      <span style="color:#00c9b1;font-weight:900;font-size:18px;letter-spacing:-0.5px">RUKISHA</span>
-      <span style="color:rgba(255,255,255,.3);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-left:12px">Project Tracker</span>
-    </div>
-    <div style="padding:32px">${content}</div>
-    <div style="padding:20px 32px;background:#f8fafc;border-top:1px solid #f1f5f9">
-      <p style="color:#94a3b8;font-size:11px;margin:0">This is an automated notification from Rukisha Project Tracker.</p>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<body style="margin:0;padding:0;background-color:#020617;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <div style="background-color:#020617;padding:40px 20px;">
+    <div style="max-width:560px;margin:0 auto;background-color:#0f172a;border-radius:24px;overflow:hidden;border:1px solid #334155;">
+      <!-- Header -->
+      <div style="background:linear-gradient(135deg, #7c3aed 0%, #00c9b1 100%);padding:40px;text-align:center;">
+        <span style="color:#ffffff;font-weight:900;font-size:24px;letter-spacing:-1px;text-transform:uppercase;">Project Hub</span>
+        <div style="color:rgba(255,255,255,0.7);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:3px;margin-top:8px;">Management Suite</div>
+      </div>
+      
+      <!-- Body -->
+      <div style="padding:48px;color:#f1f5f9;">
+        ${content}
+      </div>
+      
+      <!-- Footer -->
+      <div style="padding:32px 48px;background-color:#020617;border-top:1px solid #1e293b;text-align:center;">
+        <p style="color:#64748b;font-size:12px;margin:0;line-height:1.6;">
+          &copy; ${new Date().getFullYear()} Project Hub. All rights reserved.<br>
+          <span style="color:#475569;font-size:10px;">This is an automated notification. Please do not reply to this email.</span>
+        </p>
+      </div>
     </div>
   </div>
 </body>
@@ -130,10 +145,23 @@ export function inviteEmail(opts: {
   inviteLink: string;
 }) {
   return baseTemplate(`
-    <h2 style="color:#0f172a;font-size:20px;font-weight:900;margin:0 0 12px">You've been invited to ${opts.orgName}</h2>
-    <p style="color:#64748b;font-size:14px;margin:0 0 24px">Click the button below to set your password and access the project tracker.</p>
-    <a href="${opts.inviteLink}" style="background:#00c9b1;color:#fff;text-decoration:none;padding:12px 24px;border-radius:10px;font-weight:900;font-size:13px;letter-spacing:.5px">Accept Invitation →</a>
-    <p style="color:#94a3b8;font-size:12px;margin-top:20px">This invitation link expires in 24 hours.</p>
+    <h1 style="color:#ffffff;font-size:24px;font-weight:900;margin:0 0 16px;text-align:center;letter-spacing:-0.5px;">Welcome to the Team!</h1>
+    <p style="color:#94a3b8;font-size:16px;line-height:1.6;margin:0 0 32px;text-align:center;">
+      You've been invited to join <strong style="color:#ffffff;">${opts.orgName}</strong> on Project Hub. 
+    </p>
+    
+    <div style="text-align:center;margin-bottom:32px;">
+      <a href="${opts.inviteLink}" style="display:inline-block;background:#00c9b1;color:#ffffff;text-decoration:none;padding:16px 32px;border-radius:14px;font-weight:900;font-size:15px;letter-spacing:0.5px;box-shadow:0 10px 15px -3px rgba(0,201,177,0.3);">
+        Accept Invitation &rarr;
+      </a>
+    </div>
+    
+    <div style="background:#1e293b;border:1px solid #334155;border-radius:16px;padding:20px;text-align:center;">
+      <p style="color:#64748b;font-size:12px;margin:0;">
+        This invitation link expires in <strong style="color:#94a3b8;">24 hours</strong>.<br>
+        If you didn't expect this invitation, you can safely ignore this email.
+      </p>
+    </div>
   `);
 }
 

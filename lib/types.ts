@@ -13,6 +13,10 @@ export interface Organization {
   name: string;
   domain: string | null;
   created_at: string;
+  license_key: string | null;
+  license_type: 'standard' | 'freemium';
+  license_expires_at: string | null;
+  is_license_active: boolean;
 }
 
 export interface Project {
@@ -30,6 +34,8 @@ export interface Profile {
   email: string;
   full_name: string | null;
   avatar_url: string | null;
+  organization_id: string | null;
+  is_superadmin: boolean;
 }
 
 export interface TaskAttachment {
@@ -89,6 +95,15 @@ export interface Plan {
   phases: Phase[];
 }
 
+export interface DocumentFolder {
+  id: string;
+  organization_id: string;
+  name: string;
+  parent_id: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
 export interface Document {
   id: string;
   organization_id: string;
@@ -98,6 +113,7 @@ export interface Document {
   mime_type: string | null;
   source: "direct" | "task";
   task_attachment_id: string | null;
+  folder_id: string | null;
   uploaded_by: string | null;
   created_at: string;
 }
