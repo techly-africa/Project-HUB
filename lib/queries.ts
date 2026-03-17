@@ -212,6 +212,15 @@ export async function getProfiles(): Promise<Profile[]> {
   return (data ?? []) as Profile[];
 }
 
+export async function getProfile(): Promise<Profile | null> {
+  const sb = createSupabaseServerClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return null;
+  const { data, error } = await sb.from("profiles").select("*").eq("id", user.id).maybeSingle();
+  if (error) return null;
+  return data as Profile | null;
+}
+
 // ─── Phases ───────────────────────────────────────────────────────────────────
 
 export async function createPhase(planId: string, name: string, wbs: string) {
@@ -234,6 +243,32 @@ export async function deletePhase(id: string) {
 }
 
 // ─── Tasks ────────────────────────────────────────────────────────────────────
+
+export async function getMyTasks(): Promise<Task[]> {
+  const sb = createSupabaseServerClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await sb
+    .from("tasks")
+    .select(`
+      *,
+      phase:phases (
+        id,
+        name,
+        plan:plans (
+          id,
+          name,
+          color
+        )
+      )
+    `)
+    .eq("assigned_to", user.id)
+    .order("deadline", { ascending: true });
+
+  handleSupabaseError(error);
+  return (data ?? []) as any[];
+}
 
 export async function createTask(
   phaseId: string,

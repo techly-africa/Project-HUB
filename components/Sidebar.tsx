@@ -57,6 +57,7 @@ export default async function Sidebar() {
         {/* Core Section */}
         <div className="space-y-1">
           <SidebarLink href="/" label="Executive Dashboard" icon={<span className="text-lg">📊</span>} exact />
+          <SidebarLink href="/my-tasks" label="My Tasks" icon={<span className="text-lg">✅</span>} />
         </div>
 
         {/* Workstreams Section */}

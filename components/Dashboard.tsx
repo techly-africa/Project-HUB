@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Plan, Project, ProjectStats, Task } from "@/lib/types";
+import type { Plan, Project, ProjectStats, Task, Profile } from "@/lib/types";
 import { ProjectHealthScore, AIInsightPanel } from "./IntelligenceLayer";
 import { EditProjectModal } from "./EditProjectModal";
 import StatusUpdateModal from "./StatusUpdateModal";
@@ -98,9 +98,11 @@ function WorkstreamCard({ data, href }: { data: PlanSummary; href: string }) {
 export default function Dashboard({
   project,
   plans,
+  profile,
 }: {
   project: Project;
   plans: PlanSummary[];
+  profile: Profile | null;
 }) {
   const [editOpen, setEditOpen]   = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
@@ -138,6 +140,17 @@ export default function Dashboard({
     .slice(0, 4);
 
   const isHealthy = totalBlocked === 0 && totalCritical === 0;
+
+  const myTasks = profile
+    ? allTasks
+        .filter(t => t.assigned_to === profile.id && t.status !== "completed")
+        .sort((a, b) => {
+          // Sort by deadline if available
+          if (a.deadline && b.deadline) return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+          return 0;
+        })
+        .slice(0, 3)
+    : [];
 
   return (
     <motion.div
@@ -302,6 +315,70 @@ export default function Dashboard({
           </motion.div>
         )}
       </motion.div>
+
+      {/* ── MY TASKS ── */}
+      {profile && (
+        <motion.div variants={item} className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-bold text-contrast tracking-tight">My Tasks</h2>
+              <p className="text-[11px] text-muted mt-0.5">Your 3 most recent assignments</p>
+            </div>
+            <Link
+              href="/my-tasks"
+              className="group flex items-center gap-1 text-[11px] font-bold text-accent-primary hover:text-contrast transition-colors"
+            >
+              View All
+              <svg className="group-hover:translate-x-0.5 transition-transform" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
+            </Link>
+          </div>
+
+          <div className="bg-surface border border-border-subtle rounded-2xl overflow-hidden">
+            <div className="p-6">
+              {myTasks.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 gap-3 border border-dashed border-border-subtle rounded-xl">
+                  <div className="w-9 h-9 rounded-full bg-accent-primary/5 border border-accent-primary/10 flex items-center justify-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-muted"><path d="M20 6 9 17l-5-5"/></svg>
+                  </div>
+                  <p className="text-xs text-muted">You have no active tasks assigned.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {myTasks.map(t => (
+                    <motion.div
+                      key={t.id}
+                      whileHover={{ y: -2 }}
+                      className="group bg-surface-elevated/40 border border-border-subtle rounded-xl p-4 hover:border-accent-primary/30 transition-all duration-200"
+                    >
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <span className="text-[10px] font-bold font-mono text-muted tabular-nums">{t.wbs}</span>
+                        <StatusBadge label={t.status.replace('_', ' ')} variant={t.status === 'critical' ? 'danger' : t.status === 'blocked' ? 'warning' : 'primary'} />
+                      </div>
+                      <h3 className="text-[13px] font-bold text-contrast leading-snug mb-3 group-hover:text-accent-primary transition-colors line-clamp-2">
+                        {t.name}
+                      </h3>
+                      <div className="flex items-center justify-between mt-auto">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-1.5 h-1.5 rounded-full ${t.status === 'critical' ? 'bg-accent-danger' : t.status === 'blocked' ? 'bg-accent-warning' : 'bg-accent-primary'}`} />
+                          <span className="text-[10px] font-medium text-secondary uppercase tracking-wider">
+                            {plans.find(p => p.plan.phases.some(ph => ph.id === t.phase_id))?.plan.name || 'Workstream'}
+                          </span>
+                        </div>
+                        {t.deadline && (
+                          <div className="flex items-center gap-1.5 text-[10px] font-semibold text-accent-secondary">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                            {fmtShort(new Date(t.deadline))}
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* ── CRITICAL PATH + AGENDA ── */}
       <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-3 gap-4">
