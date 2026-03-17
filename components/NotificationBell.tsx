@@ -43,7 +43,7 @@ export default function NotificationBell({ notifications, unreadCount }: Props) 
     <div className="relative">
       <button
         onClick={() => setOpen(o => !o)}
-        className="relative flex items-center justify-center w-8 h-8 rounded-xl hover:bg-white/10 transition-colors"
+        className="relative flex items-center justify-center w-8 h-8 rounded-xl hover:bg-slate-100 transition-colors"
         title="Notifications"
       >
         <span className="text-base leading-none">🔔</span>
@@ -60,7 +60,7 @@ export default function NotificationBell({ notifications, unreadCount }: Props) 
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
 
           {/* Panel */}
-          <div className="absolute bottom-full left-0 mb-2 w-80 bg-slate-800 border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden">
+          <div className="absolute right-0 top-full mt-2 w-80 bg-slate-800 border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
               <p className="text-white text-[11px] font-black uppercase tracking-widest">Notifications</p>
               {unreadCount > 0 && (

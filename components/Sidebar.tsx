@@ -1,36 +1,21 @@
-import { getProjects, getPlansByProject, getTaskStatuses } from "@/lib/queries";
-import type { TaskStatusConfig } from "@/lib/types";
+import { getProjects, getPlansByProject } from "@/lib/queries";
 import { getActiveProjectId } from "@/lib/active-project";
-import { getNotifications, getUnreadCount } from "@/lib/notifications";
 import BrandLogo from "./BrandLogo";
-import SignOutButton from "./SignOutButton";
 import ProjectSwitcher from "./ProjectSwitcher";
 import { SidebarLink } from "./SidebarLink";
 import NewWorkstreamButton from "./NewWorkstreamButton";
-import NotificationBell from "./NotificationBell";
 
 export default async function Sidebar() {
   let projects: Awaited<ReturnType<typeof getProjects>> = [];
   let rawActiveId: string | null = null;
-  let notifications: Awaited<ReturnType<typeof getNotifications>> = [];
-  let unreadCount = 0;
-  let statuses: TaskStatusConfig[] = [];
 
   try {
-    [projects, rawActiveId, notifications, unreadCount] = await Promise.all([
+    [projects, rawActiveId] = await Promise.all([
       getProjects(),
       getActiveProjectId(),
-      getNotifications(),
-      getUnreadCount(),
     ]);
   } catch (err) {
     console.error("[Sidebar] Failed to load data:", err);
-  }
-
-  try {
-    statuses = await getTaskStatuses();
-  } catch {
-    // table may not exist yet — show nothing until migration is run
   }
 
   const activeProjectId = rawActiveId ?? projects[0]?.id ?? "";
@@ -75,25 +60,8 @@ export default async function Sidebar() {
         </div>
 
         <SidebarLink href="/roadmap" label="Roadmap" icon="🗺️" />
-        <SidebarLink href="/settings" label="Settings" icon="⚙️" />
+        <SidebarLink href="/repository" label="Repository" icon="🗂️" />
       </nav>
-
-      <div className="px-6 pb-6 space-y-2">
-        <p className="text-white/20 text-[10px] uppercase tracking-widest font-black mb-3">Priority Status</p>
-        {statuses.map(s => (
-          <div key={s.id} className="flex items-center gap-3">
-            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
-            <span className="text-white/40 text-[11px] font-medium">{s.label}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="px-6 pb-8 border-t border-white/5 pt-6 flex items-center gap-3">
-        <div className="flex-1">
-          <SignOutButton />
-        </div>
-        <NotificationBell notifications={notifications} unreadCount={unreadCount} />
-      </div>
     </aside>
   );
 }

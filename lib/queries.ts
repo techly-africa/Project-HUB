@@ -1,7 +1,7 @@
 "use server";
 
 import { createSupabaseServerClient } from "./supabase-server";
-import type { Organization, Phase, Plan, PlanType, Profile, Project, ProjectStats, Task, TaskComment, TaskStatus, TaskStatusConfig } from "./types";
+import type { Document, Organization, Phase, Plan, PlanType, Profile, Project, ProjectStats, Task, TaskAttachmentWithContext, TaskComment, TaskStatus, TaskStatusConfig } from "./types";
 import { notifyTaskAssigned, notifyTaskComment, notifyTaskMention, notifyTaskStatusChanged } from "./notifications";
 
 function handleSupabaseError(error: any) {
@@ -448,4 +448,70 @@ export async function deleteTaskStatus(id: string) {
   const sb = createSupabaseServerClient();
   const { error } = await sb.from("task_statuses").delete().eq("id", id);
   handleSupabaseError(error);
+}
+
+// ─── Documents ────────────────────────────────────────────────────────────────
+
+export async function getDocuments(): Promise<Document[]> {
+  const sb = createSupabaseServerClient();
+  const { data, error } = await sb
+    .from("documents")
+    .select("*")
+    .order("created_at", { ascending: false });
+  handleSupabaseError(error);
+  return (data ?? []) as Document[];
+}
+
+export async function addDocument(payload: {
+  name: string;
+  storage_path: string;
+  size: number | null;
+  mime_type: string | null;
+  source: "direct" | "task";
+  task_attachment_id?: string | null;
+}): Promise<Document> {
+  const sb = createSupabaseServerClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) throw new Error("Auth required");
+  const { data: profile } = await sb.from("profiles").select("organization_id").eq("id", user.id).single();
+  if (!profile?.organization_id) throw new Error("No organization found");
+  const { data, error } = await sb
+    .from("documents")
+    .insert({ ...payload, organization_id: profile.organization_id, uploaded_by: user.id })
+    .select()
+    .single();
+  handleSupabaseError(error);
+  return data as Document;
+}
+
+export async function deleteDocument(id: string) {
+  const sb = createSupabaseServerClient();
+  const { error } = await sb.from("documents").delete().eq("id", id);
+  handleSupabaseError(error);
+}
+
+// Fetches all task attachments across the org with task + plan context for the picker
+export async function getTaskAttachmentsWithContext(): Promise<TaskAttachmentWithContext[]> {
+  const sb = createSupabaseServerClient();
+  const { data, error } = await sb
+    .from("task_attachments")
+    .select(`
+      *,
+      task:tasks!inner(id, name, phase:phases!inner(plan:plans!inner(name)))
+    `)
+    .order("created_at", { ascending: false });
+  handleSupabaseError(error);
+
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    task_id: row.task?.id ?? "",
+    task_name: row.task?.name ?? "Unknown task",
+    plan_name: row.task?.phase?.plan?.name ?? "Unknown workstream",
+    name: row.name,
+    storage_path: row.storage_path,
+    size: row.size,
+    mime_type: row.mime_type,
+    uploaded_by: row.uploaded_by,
+    created_at: row.created_at,
+  }));
 }

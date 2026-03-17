@@ -89,6 +89,25 @@ export interface Plan {
   phases: Phase[];
 }
 
+export interface Document {
+  id: string;
+  organization_id: string;
+  name: string;
+  storage_path: string;
+  size: number | null;
+  mime_type: string | null;
+  source: "direct" | "task";
+  task_attachment_id: string | null;
+  uploaded_by: string | null;
+  created_at: string;
+}
+
+export interface TaskAttachmentWithContext extends TaskAttachment {
+  task_name: string;
+  task_id: string;
+  plan_name: string;
+}
+
 export interface TaskStatusConfig {
   id: string;
   organization_id: string;
