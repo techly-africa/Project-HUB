@@ -1,4 +1,5 @@
-import { getProjects, getPlansByProject } from "@/lib/queries";
+import { getProjects, getPlansByProject, getTaskStatuses } from "@/lib/queries";
+import type { TaskStatusConfig } from "@/lib/types";
 import { getActiveProjectId } from "@/lib/active-project";
 import { getNotifications, getUnreadCount } from "@/lib/notifications";
 import BrandLogo from "./BrandLogo";
@@ -9,15 +10,36 @@ import NewWorkstreamButton from "./NewWorkstreamButton";
 import NotificationBell from "./NotificationBell";
 
 export default async function Sidebar() {
-  const [projects, rawActiveId, notifications, unreadCount] = await Promise.all([
-    getProjects(),
-    getActiveProjectId(),
-    getNotifications(),
-    getUnreadCount(),
-  ]);
+  let projects: Awaited<ReturnType<typeof getProjects>> = [];
+  let rawActiveId: string | null = null;
+  let notifications: Awaited<ReturnType<typeof getNotifications>> = [];
+  let unreadCount = 0;
+  let statuses: TaskStatusConfig[] = [];
+
+  try {
+    [projects, rawActiveId, notifications, unreadCount] = await Promise.all([
+      getProjects(),
+      getActiveProjectId(),
+      getNotifications(),
+      getUnreadCount(),
+    ]);
+  } catch (err) {
+    console.error("[Sidebar] Failed to load data:", err);
+  }
+
+  try {
+    statuses = await getTaskStatuses();
+  } catch {
+    // table may not exist yet — show nothing until migration is run
+  }
 
   const activeProjectId = rawActiveId ?? projects[0]?.id ?? "";
-  const plans = activeProjectId ? await getPlansByProject(activeProjectId) : [];
+  let plans: Awaited<ReturnType<typeof getPlansByProject>> = [];
+  try {
+    plans = activeProjectId ? await getPlansByProject(activeProjectId) : [];
+  } catch (err) {
+    console.error("[Sidebar] Failed to load plans:", err);
+  }
 
   return (
     <aside className="w-60 flex-shrink-0 bg-brand-navy flex flex-col h-screen shadow-2xl">
@@ -58,16 +80,10 @@ export default async function Sidebar() {
 
       <div className="px-6 pb-6 space-y-2">
         <p className="text-white/20 text-[10px] uppercase tracking-widest font-black mb-3">Priority Status</p>
-        {[
-          { label: "Completed", color: "bg-emerald-400" },
-          { label: "In Progress", color: "bg-blue-400" },
-          { label: "Critical", color: "bg-red-500" },
-          { label: "Blocked", color: "bg-brand-pink" },
-          { label: "Not Started", color: "bg-slate-500" },
-        ].map(({ label, color }) => (
-          <div key={label} className="flex items-center gap-3">
-            <span className={`w-1.5 h-1.5 rounded-full ${color}`} />
-            <span className="text-white/40 text-[11px] font-medium">{label}</span>
+        {statuses.map(s => (
+          <div key={s.id} className="flex items-center gap-3">
+            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
+            <span className="text-white/40 text-[11px] font-medium">{s.label}</span>
           </div>
         ))}
       </div>

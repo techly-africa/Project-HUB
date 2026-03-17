@@ -5,9 +5,15 @@ import type { Plan } from "@/lib/types";
 import { createPhase } from "@/lib/queries";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import dynamic from "next/dynamic";
 import PhaseCard from "./PhaseCard";
-import KanbanView from "./KanbanView";
-import TimelineView from "./TimelineView";
+
+const KanbanView = dynamic(() => import("./KanbanView"), {
+  loading: () => <div className="h-64 rounded-3xl bg-slate-50 animate-pulse" />,
+});
+const TimelineView = dynamic(() => import("./TimelineView"), {
+  loading: () => <div className="h-64 rounded-3xl bg-slate-50 animate-pulse" />,
+});
 
 function calcStats(plan: Plan) {
   const tasks = plan.phases.flatMap((p) => p.tasks);

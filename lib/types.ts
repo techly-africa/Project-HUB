@@ -89,6 +89,15 @@ export interface Plan {
   phases: Phase[];
 }
 
+export interface TaskStatusConfig {
+  id: string;
+  organization_id: string;
+  value: string;
+  label: string;
+  color: string;
+  display_order: number;
+}
+
 export interface ProjectStats {
   total: number;
   completed: number;

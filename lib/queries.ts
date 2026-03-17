@@ -1,8 +1,8 @@
 "use server";
 
 import { createSupabaseServerClient } from "./supabase-server";
-import type { Organization, Phase, Plan, PlanType, Profile, Project, ProjectStats, Task, TaskComment, TaskStatus } from "./types";
-import { notifyTaskAssigned, notifyTaskComment, notifyTaskStatusChanged } from "./notifications";
+import type { Organization, Phase, Plan, PlanType, Profile, Project, ProjectStats, Task, TaskComment, TaskStatus, TaskStatusConfig } from "./types";
+import { notifyTaskAssigned, notifyTaskComment, notifyTaskMention, notifyTaskStatusChanged } from "./notifications";
 
 function handleSupabaseError(error: any) {
   if (error) {
@@ -17,40 +17,54 @@ function handleSupabaseError(error: any) {
 }
 
 // ─── Shared helper to hydrate phases + tasks for a plan row ──────────────────
-async function hydratePlan(sb: any, plan: any): Promise<Plan> {
+// profileMap is pre-fetched by callers to avoid one extra query per plan call.
+async function hydratePlan(sb: any, plan: any, profileMap: Record<string, any>): Promise<Plan> {
   const { data: phases, error: pe } = await sb.from("phases").select("*").eq("plan_id", plan.id).order("display_order");
   handleSupabaseError(pe);
 
-  const { data: profiles } = await sb.from("profiles").select("*");
-  const profileMap = Object.fromEntries((profiles ?? []).map((p: any) => [p.id, p]));
+  if (!phases?.length) {
+    return { ...plan, color: plan.color ?? "bg-brand-blue", project_id: plan.project_id ?? "", phases: [] } as Plan;
+  }
 
-  const phasesWithTasks: Phase[] = await Promise.all(
-    (phases ?? []).map(async (ph: any) => {
-      const { data: tasks, error: te } = await sb.from("tasks").select("*").eq("phase_id", ph.id).order("wbs");
-      handleSupabaseError(te);
+  const phaseIds = phases.map((ph: any) => ph.id);
 
-      const taskIds = (tasks ?? []).map((t: any) => t.id);
-      const { data: counts } = await sb.from("task_comments").select("task_id").in("task_id", taskIds);
-      const countMap = (counts ?? []).reduce((acc: any, curr: any) => {
-        acc[curr.task_id] = (acc[curr.task_id] || 0) + 1;
-        return acc;
-      }, {});
+  // Batch: single query for all tasks across all phases (replaces N per-phase queries)
+  const { data: allTasks, error: te } = await sb.from("tasks").select("*").in("phase_id", phaseIds).order("wbs");
+  handleSupabaseError(te);
 
-      const hydratedTasks = (tasks ?? []).map((t: any) => ({
-        ...t,
-        assignee: t.assigned_to ? profileMap[t.assigned_to] : null,
-        comment_count: countMap[t.id] || 0
-      }));
+  const taskIds = (allTasks ?? []).map((t: any) => t.id);
 
-      return { ...ph, tasks: hydratedTasks as Task[] };
-    })
-  );
+  // Batch: single query for all comment counts across all tasks
+  const { data: counts } = taskIds.length > 0
+    ? await sb.from("task_comments").select("task_id").in("task_id", taskIds)
+    : { data: [] };
+
+  const countMap = (counts ?? []).reduce((acc: any, curr: any) => {
+    acc[curr.task_id] = (acc[curr.task_id] || 0) + 1;
+    return acc;
+  }, {});
+
+  // Group hydrated tasks by phase
+  const tasksByPhase = (allTasks ?? []).reduce((acc: any, t: any) => {
+    if (!acc[t.phase_id]) acc[t.phase_id] = [];
+    acc[t.phase_id].push({
+      ...t,
+      assignee: t.assigned_to ? profileMap[t.assigned_to] : null,
+      comment_count: countMap[t.id] || 0,
+    });
+    return acc;
+  }, {});
+
+  const phasesWithTasks: Phase[] = phases.map((ph: any) => ({
+    ...ph,
+    tasks: (tasksByPhase[ph.id] ?? []) as Task[],
+  }));
 
   return {
     ...plan,
     color: plan.color ?? "bg-brand-blue",
     project_id: plan.project_id ?? "",
-    phases: phasesWithTasks
+    phases: phasesWithTasks,
   } as Plan;
 }
 
@@ -114,17 +128,25 @@ export async function updateProject(
 
 export async function getPlansByProject(projectId: string): Promise<Plan[]> {
   const sb = createSupabaseServerClient();
-  const { data: planRows, error } = await sb.from("plans").select("*").eq("project_id", projectId).order("name");
+  const [{ data: planRows, error }, { data: profiles }] = await Promise.all([
+    sb.from("plans").select("*").eq("project_id", projectId).order("name"),
+    sb.from("profiles").select("*"),
+  ]);
   handleSupabaseError(error);
-  return Promise.all((planRows ?? []).map((p: any) => hydratePlan(sb, p)));
+  const profileMap = Object.fromEntries((profiles ?? []).map((p: any) => [p.id, p]));
+  return Promise.all((planRows ?? []).map((p: any) => hydratePlan(sb, p, profileMap)));
 }
 
 export async function getPlanById(id: string): Promise<Plan> {
   const sb = createSupabaseServerClient();
-  const { data: plan, error } = await sb.from("plans").select("*").eq("id", id).maybeSingle();
+  const [{ data: plan, error }, { data: profiles }] = await Promise.all([
+    sb.from("plans").select("*").eq("id", id).maybeSingle(),
+    sb.from("profiles").select("*"),
+  ]);
   handleSupabaseError(error);
   if (!plan) throw new Error(`No plan found with id '${id}'.`);
-  return hydratePlan(sb, plan);
+  const profileMap = Object.fromEntries((profiles ?? []).map((p: any) => [p.id, p]));
+  return hydratePlan(sb, plan, profileMap);
 }
 
 export async function getPlanWithStatsByProject(projectId: string): Promise<{ plan: Plan; stats: ProjectStats }[]> {
@@ -148,10 +170,14 @@ export async function createPlan(projectId: string, name: string, color: string)
 
 export async function getPlanByType(type: PlanType): Promise<Plan> {
   const sb = createSupabaseServerClient();
-  const { data: plan, error } = await sb.from("plans").select("*").eq("type", type).maybeSingle();
+  const [{ data: plan, error }, { data: profiles }] = await Promise.all([
+    sb.from("plans").select("*").eq("type", type).maybeSingle(),
+    sb.from("profiles").select("*"),
+  ]);
   handleSupabaseError(error);
   if (!plan) throw new Error(`No plan found for type '${type}'. Please run the seed script.`);
-  return hydratePlan(sb, plan);
+  const profileMap = Object.fromEntries((profiles ?? []).map((p: any) => [p.id, p]));
+  return hydratePlan(sb, plan, profileMap);
 }
 
 export async function getPlanWithStats(type: PlanType) {
@@ -328,7 +354,7 @@ export async function setTaskDeadline(taskId: string, deadline: string | null) {
 
 // ─── Comments ─────────────────────────────────────────────────────────────────
 
-export async function addTaskComment(taskId: string, content: string) {
+export async function addTaskComment(taskId: string, content: string, mentionedIds: string[] = []) {
   const sb = createSupabaseServerClient();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) throw new Error("Auth required");
@@ -341,18 +367,42 @@ export async function addTaskComment(taskId: string, content: string) {
         sb.from("tasks").select("name, assigned_to").eq("id", taskId).single(),
         sb.from("profiles").select("full_name, email").eq("id", user.id).single(),
       ]);
-      if (!task?.assigned_to || task.assigned_to === user.id) return;
-      const { data: assignee } = await sb.from("profiles").select("id, email, full_name").eq("id", task.assigned_to).single();
-      if (!assignee) return;
-      await notifyTaskComment({
-        taskId,
-        taskName: task.name,
-        assigneeId: assignee.id,
-        assigneeEmail: assignee.email,
-        assigneeName: assignee.full_name,
-        commenterName: commenter?.full_name || commenter?.email || "Someone",
-        commentBody: content,
-      });
+      if (!task) return;
+      const commenterName = commenter?.full_name || commenter?.email || "Someone";
+
+      // Notify assignee (existing behaviour) — skip if commenter is the assignee
+      if (task.assigned_to && task.assigned_to !== user.id) {
+        const { data: assignee } = await sb.from("profiles").select("id, email, full_name").eq("id", task.assigned_to).single();
+        if (assignee) {
+          await notifyTaskComment({
+            taskId,
+            taskName: task.name,
+            assigneeId: assignee.id,
+            assigneeEmail: assignee.email,
+            assigneeName: assignee.full_name,
+            commenterName,
+            commentBody: content,
+          });
+        }
+      }
+
+      // Notify each mentioned user — skip the commenter and anyone already notified as assignee
+      const alreadyNotified = new Set([user.id, task.assigned_to].filter(Boolean) as string[]);
+      const uniqueMentions = mentionedIds.filter(id => !alreadyNotified.has(id));
+      if (uniqueMentions.length > 0) {
+        const { data: mentionedProfiles } = await sb.from("profiles").select("id, email, full_name").in("id", uniqueMentions);
+        for (const profile of (mentionedProfiles ?? [])) {
+          await notifyTaskMention({
+            taskId,
+            taskName: task.name,
+            mentionedId: profile.id,
+            mentionedEmail: profile.email,
+            mentionedName: profile.full_name,
+            mentionerName: commenterName,
+            commentBody: content,
+          });
+        }
+      }
     } catch {}
   })();
 }
@@ -365,4 +415,37 @@ export async function getTaskComments(taskId: string): Promise<TaskComment[]> {
     .order("created_at", { ascending: true });
   handleSupabaseError(error);
   return (data ?? []) as any[];
+}
+
+// ─── Task Statuses ────────────────────────────────────────────────────────────
+
+export async function getTaskStatuses(): Promise<TaskStatusConfig[]> {
+  const sb = createSupabaseServerClient();
+  const { data, error } = await sb.from("task_statuses")
+    .select("*")
+    .order("display_order", { ascending: true });
+  handleSupabaseError(error);
+  return (data ?? []) as TaskStatusConfig[];
+}
+
+export async function createTaskStatus(payload: { value: string; label: string; color: string; display_order: number }) {
+  const sb = createSupabaseServerClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) throw new Error("Auth required");
+  const { data: profile } = await sb.from("profiles").select("organization_id").eq("id", user.id).single();
+  if (!profile?.organization_id) throw new Error("No organization found");
+  const { error } = await sb.from("task_statuses").insert({ ...payload, organization_id: profile.organization_id });
+  handleSupabaseError(error);
+}
+
+export async function updateTaskStatusConfig(id: string, payload: Partial<Pick<TaskStatusConfig, "label" | "color" | "display_order">>) {
+  const sb = createSupabaseServerClient();
+  const { error } = await sb.from("task_statuses").update(payload).eq("id", id);
+  handleSupabaseError(error);
+}
+
+export async function deleteTaskStatus(id: string) {
+  const sb = createSupabaseServerClient();
+  const { error } = await sb.from("task_statuses").delete().eq("id", id);
+  handleSupabaseError(error);
 }

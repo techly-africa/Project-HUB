@@ -2,7 +2,7 @@
 
 import { createSupabaseServerClient } from "./supabase-server";
 import { createSupabaseAdminClient } from "./supabase-admin";
-import { sendEmail, taskAssignedEmail, taskCommentEmail, taskStatusEmail } from "./email";
+import { sendEmail, taskAssignedEmail, taskCommentEmail, taskMentionEmail, taskStatusEmail } from "./email";
 
 export interface Notification {
   id: string;
@@ -166,6 +166,38 @@ export async function notifyTaskStatusChanged(opts: {
       taskName: opts.taskName,
       newStatus: opts.newStatus,
       updatedByName: opts.updatedByName,
+      appUrl: APP_URL,
+    }),
+  });
+}
+
+// ─── Event: user mentioned in comment ────────────────────────────────────────
+
+export async function notifyTaskMention(opts: {
+  taskId: string;
+  taskName: string;
+  mentionedId: string;
+  mentionedEmail: string;
+  mentionedName: string | null;
+  mentionerName: string;
+  commentBody: string;
+}) {
+  await createNotification({
+    user_id: opts.mentionedId,
+    type: "task_mention",
+    title: `You were mentioned in a comment`,
+    body: `${opts.mentionerName} mentioned you on "${opts.taskName}"`,
+    task_id: opts.taskId,
+  });
+
+  await sendEmail({
+    to: opts.mentionedEmail,
+    subject: `You were mentioned on: ${opts.taskName}`,
+    html: taskMentionEmail({
+      recipientName: opts.mentionedName || opts.mentionedEmail,
+      mentionerName: opts.mentionerName,
+      taskName: opts.taskName,
+      comment: opts.commentBody,
       appUrl: APP_URL,
     }),
   });

@@ -107,6 +107,24 @@ export function taskStatusEmail(opts: {
   `);
 }
 
+export function taskMentionEmail(opts: {
+  recipientName: string;
+  mentionerName: string;
+  taskName: string;
+  comment: string;
+  appUrl: string;
+}) {
+  return baseTemplate(`
+    <p style="color:#64748b;font-size:14px;margin:0 0 8px">Hi ${opts.recipientName},</p>
+    <h2 style="color:#0f172a;font-size:20px;font-weight:900;margin:0 0 16px">You were mentioned in a comment</h2>
+    <div style="background:#f8fafc;border-radius:12px;padding:16px 20px;margin-bottom:24px">
+      <p style="color:#64748b;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px">${opts.taskName}</p>
+      <p style="color:#0f172a;font-size:14px;margin:0"><strong>${opts.mentionerName}:</strong> ${opts.comment}</p>
+    </div>
+    <a href="${opts.appUrl}" style="background:#00c9b1;color:#fff;text-decoration:none;padding:12px 24px;border-radius:10px;font-weight:900;font-size:13px;letter-spacing:.5px">View Task →</a>
+  `);
+}
+
 export function inviteEmail(opts: {
   orgName: string;
   inviteLink: string;

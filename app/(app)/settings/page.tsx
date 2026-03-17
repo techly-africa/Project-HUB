@@ -1,6 +1,7 @@
-import { getOrganization, getProfiles } from "@/lib/queries";
+import { getOrganization, getProfiles, getTaskStatuses } from "@/lib/queries";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import MembersManager from "@/components/MembersManager";
+import StatusManager from "@/components/StatusManager";
 
 export default async function SettingsPage() {
   const sb = createSupabaseServerClient();
@@ -9,6 +10,13 @@ export default async function SettingsPage() {
     getProfiles(),
     sb.auth.getUser(),
   ]);
+
+  let statuses: Awaited<ReturnType<typeof getTaskStatuses>> = [];
+  try {
+    statuses = await getTaskStatuses();
+  } catch {
+    // migration not yet applied
+  }
 
   return (
     <div className="p-8 max-w-3xl mx-auto">
@@ -33,6 +41,9 @@ export default async function SettingsPage() {
           <p className="text-sm text-slate-400">No organization found — run migration 014 in your Supabase dashboard.</p>
         )}
       </section>
+
+      {/* Priority Status */}
+      <StatusManager statuses={statuses} />
 
       {/* Members */}
       <MembersManager members={members} currentUserId={user?.id ?? ""} />

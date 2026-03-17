@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Task, TaskComment, Profile, TaskStatus as TStatus } from "@/lib/types";
-import { getTaskComments, addTaskComment, getProfiles, assignTask, setTaskDeadline, updateTaskDates, updateTaskStatus } from "@/lib/queries";
+import { getTaskComments, addTaskComment, getProfiles, assignTask, updateTaskDates, updateTaskStatus } from "@/lib/queries";
 import TaskAttachments from "./TaskAttachments";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -24,6 +24,19 @@ const STATUS_OPTIONS: { value: TStatus; label: string; color: string }[] = [
     { value: "not_applicable", label: "N/A", color: "bg-slate-200" },
 ];
 
+function profileHandle(p: Profile) {
+    return p.email.split("@")[0];
+}
+
+function renderContent(text: string) {
+    const parts = text.split(/(@\w+)/g);
+    return parts.map((part, i) =>
+        /^@\w+$/.test(part)
+            ? <span key={i} className="text-brand-blue font-black">{part}</span>
+            : part
+    );
+}
+
 export default function TaskSidePanel({ task, isOpen, onClose }: Props) {
     const [mounted, setMounted] = useState(false);
     const [comments, setComments] = useState<TaskComment[]>([]);
@@ -31,7 +44,11 @@ export default function TaskSidePanel({ task, isOpen, onClose }: Props) {
     const [newComment, setNewComment] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+    const [mentionedIds, setMentionedIds] = useState<string[]>([]);
+    const [activeSuggestion, setActiveSuggestion] = useState(0);
 
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const router = useRouter();
 
     useEffect(() => {
@@ -61,13 +78,70 @@ export default function TaskSidePanel({ task, isOpen, onClose }: Props) {
         }
     }
 
+    // ── @mention detection ────────────────────────────────────────────────────
+
+    const mentionSuggestions = mentionQuery !== null
+        ? profiles.filter(p => {
+            const q = mentionQuery.toLowerCase();
+            return p.email.toLowerCase().includes(q) || (p.full_name?.toLowerCase().includes(q) ?? false);
+        }).slice(0, 5)
+        : [];
+
+    function handleCommentChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+        const val = e.target.value;
+        setNewComment(val);
+        const cursor = e.target.selectionStart ?? val.length;
+        const before = val.slice(0, cursor);
+        const match = before.match(/@(\w*)$/);
+        setMentionQuery(match ? match[1] : null);
+        setActiveSuggestion(0);
+    }
+
+    function handleMentionSelect(profile: Profile) {
+        const h = profileHandle(profile);
+        const cursor = textareaRef.current?.selectionStart ?? newComment.length;
+        const before = newComment.slice(0, cursor).replace(/@\w*$/, `@${h} `);
+        const after = newComment.slice(cursor);
+        const next = before + after;
+        setNewComment(next);
+        setMentionedIds(prev => prev.includes(profile.id) ? prev : [...prev, profile.id]);
+        setMentionQuery(null);
+        requestAnimationFrame(() => {
+            if (textareaRef.current) {
+                textareaRef.current.focus();
+                textareaRef.current.selectionStart = before.length;
+                textareaRef.current.selectionEnd = before.length;
+            }
+        });
+    }
+
+    function handleTextareaKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+        if (mentionQuery === null || mentionSuggestions.length === 0) return;
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setActiveSuggestion(i => Math.min(i + 1, mentionSuggestions.length - 1));
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setActiveSuggestion(i => Math.max(i - 1, 0));
+        } else if (e.key === "Enter" || e.key === "Tab") {
+            e.preventDefault();
+            handleMentionSelect(mentionSuggestions[activeSuggestion]);
+        } else if (e.key === "Escape") {
+            setMentionQuery(null);
+        }
+    }
+
+    // ── Submit ────────────────────────────────────────────────────────────────
+
     async function handleAddComment(e: React.FormEvent) {
         e.preventDefault();
-        if (!task || !newComment) return;
+        if (!task || !newComment.trim()) return;
         setIsSubmitting(true);
         try {
-            await addTaskComment(task.id, newComment);
+            await addTaskComment(task.id, newComment, mentionedIds);
             setNewComment("");
+            setMentionedIds([]);
+            setMentionQuery(null);
             const updated = await getTaskComments(task.id);
             setComments(updated);
             toast.success("Comment added");
@@ -84,7 +158,6 @@ export default function TaskSidePanel({ task, isOpen, onClose }: Props) {
             await updateTaskStatus(task.id, status);
             toast.success(`Status updated to ${status.replace('_', ' ')}`);
             router.refresh();
-            // Update local task state if needed, but router.refresh usually works
         } catch (err) {
             toast.error("Failed to update status");
         }
@@ -175,7 +248,6 @@ export default function TaskSidePanel({ task, isOpen, onClose }: Props) {
                                     value={task.end_date ? new Date(task.end_date).toISOString().split('T')[0] : ""}
                                     onChange={async (e) => {
                                         await updateTaskDates(task.id, task.start_date, e.target.value || null);
-                                        // Also update deadline as they are synced in queries.ts
                                         toast.success("Timeline updated");
                                         router.refresh();
                                     }}
@@ -201,51 +273,77 @@ export default function TaskSidePanel({ task, isOpen, onClose }: Props) {
                         <TaskAttachments taskId={task.id} />
                     </div>
 
-                    {/* Comments Discussion */}
+                    {/* Comments list */}
                     <div className="space-y-4">
                         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Discussion</h3>
-
-                        <div className="space-y-4">
-                            {isLoading ? (
-                                <div className="h-20 flex items-center justify-center">
-                                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-tighter animate-pulse">Loading comments...</span>
-                                </div>
-                            ) : comments.length > 0 ? (
-                                comments.map(c => (
-                                    <div key={c.id} className="flex flex-col items-start gap-1">
-                                        <div className="flex items-center gap-2 mb-1 px-1">
-                                            <span className="text-[10px] font-black text-slate-900">{c.user?.email.split('@')[0]}</span>
-                                            <span className="text-[8px] font-bold text-slate-300">{format(new Date(c.created_at), "MMM d, HH:mm")}</span>
-                                        </div>
-                                        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 max-w-[90%]">
-                                            <p className="text-xs text-slate-600 font-medium leading-relaxed">{c.content}</p>
-                                        </div>
+                        {isLoading ? (
+                            <div className="h-20 flex items-center justify-center">
+                                <span className="text-[10px] font-black text-slate-300 uppercase tracking-tighter animate-pulse">Loading comments...</span>
+                            </div>
+                        ) : comments.length > 0 ? (
+                            comments.map(c => (
+                                <div key={c.id} className="flex flex-col items-start gap-1">
+                                    <div className="flex items-center gap-2 mb-1 px-1">
+                                        <span className="text-[10px] font-black text-slate-900">{c.user?.email.split('@')[0]}</span>
+                                        <span className="text-[8px] font-bold text-slate-300">{format(new Date(c.created_at), "MMM d, HH:mm")}</span>
                                     </div>
-                                ))
-                            ) : (
-                                <div className="bg-slate-50/50 rounded-3xl py-12 border border-slate-50 border-dashed flex flex-col items-center justify-center">
-                                    <span className="text-2xl mb-2">💬</span>
-                                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">No comments yet</p>
+                                    <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 max-w-[90%]">
+                                        <p className="text-xs text-slate-600 font-medium leading-relaxed">{renderContent(c.content)}</p>
+                                    </div>
                                 </div>
-                            )}
-                        </div>
-
-                        <form onSubmit={handleAddComment} className="relative pt-4 mt-4 border-t border-slate-50">
-                            <textarea
-                                required
-                                placeholder="Share an update or question..."
-                                className="w-full bg-white border border-slate-200 rounded-[28px] px-6 py-4 pr-16 text-xs font-bold text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-brand-blue outline-none transition-all resize-none h-20 shadow-sm"
-                                value={newComment}
-                                onChange={e => setNewComment(e.target.value)}
-                            />
-                            <button
-                                disabled={isSubmitting || !newComment}
-                                className="absolute right-3 bottom-8 bg-brand-blue text-white px-5 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 disabled:opacity-20 transition-all shadow-lg shadow-brand-blue/20"
-                            >
-                                Post
-                            </button>
-                        </form>
+                            ))
+                        ) : (
+                            <div className="bg-slate-50/50 rounded-3xl py-12 border border-slate-50 border-dashed flex flex-col items-center justify-center">
+                                <span className="text-2xl mb-2">💬</span>
+                                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">No comments yet</p>
+                            </div>
+                        )}
                     </div>
+                </div>
+
+                {/* ── Comment form — outside overflow-y-auto so the @mention dropdown isn't clipped ── */}
+                <div className="flex-shrink-0 border-t border-slate-100 px-6 pt-4 pb-6 relative">
+
+                    {/* @mention dropdown — positioned above the textarea, never clipped */}
+                    {mentionSuggestions.length > 0 && (
+                        <div className="absolute bottom-full mb-1 left-6 right-6 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden z-20">
+                            <p className="px-4 pt-2.5 pb-1 text-[9px] font-black text-slate-300 uppercase tracking-widest">Mention a teammate</p>
+                            {mentionSuggestions.map((p, i) => (
+                                <button
+                                    key={p.id}
+                                    type="button"
+                                    onMouseDown={e => { e.preventDefault(); handleMentionSelect(p); }}
+                                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${i === activeSuggestion ? "bg-brand-teal/5" : "hover:bg-slate-50"}`}
+                                >
+                                    <span className="w-7 h-7 rounded-full bg-brand-navy flex items-center justify-center text-white text-[10px] font-black flex-shrink-0">
+                                        {(p.full_name ?? p.email)[0].toUpperCase()}
+                                    </span>
+                                    <div className="min-w-0">
+                                        {p.full_name && <p className="text-xs font-bold text-slate-800 truncate">{p.full_name}</p>}
+                                        <p className="text-[10px] text-slate-400 truncate">@{profileHandle(p)}</p>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleAddComment} className="relative">
+                        <textarea
+                            ref={textareaRef}
+                            required
+                            placeholder="Share an update… type @ to mention someone"
+                            className="w-full bg-white border border-slate-200 rounded-[28px] px-6 py-4 pr-16 text-xs font-bold text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-brand-blue outline-none transition-all resize-none h-20 shadow-sm"
+                            value={newComment}
+                            onChange={handleCommentChange}
+                            onKeyDown={handleTextareaKeyDown}
+                        />
+                        <button
+                            disabled={isSubmitting || !newComment.trim()}
+                            className="absolute right-3 bottom-3 bg-brand-blue text-white px-5 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 disabled:opacity-20 transition-all shadow-lg shadow-brand-blue/20"
+                        >
+                            Post
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>,
