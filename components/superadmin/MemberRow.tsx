@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import type { OrgMember } from "@/lib/superadmin-queries";
-import { format } from "date-fns";
 import { removeOrgMemberAction, transferMemberAction, resendInviteAction } from "@/app/actions/superadmin";
 import { toast } from "sonner";
 
@@ -22,8 +21,8 @@ export default function MemberRow({ member, orgId, orgs }: Props) {
       try {
         await removeOrgMemberAction(member.id, orgId);
         toast.success("Member removed");
-      } catch (err: any) {
-        toast.error(err.message);
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "An error occurred");
       }
     });
   }
@@ -34,8 +33,8 @@ export default function MemberRow({ member, orgId, orgs }: Props) {
         await transferMemberAction(member.id, toOrgId, orgId);
         toast.success("Member transferred");
         setShowTransfer(false);
-      } catch (err: any) {
-        toast.error(err.message);
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "An error occurred");
       }
     });
   }
@@ -45,8 +44,8 @@ export default function MemberRow({ member, orgId, orgs }: Props) {
       try {
         await resendInviteAction(member.email, orgId, member.full_name || undefined);
         toast.success("Invitation resent");
-      } catch (err: any) {
-        toast.error(err.message);
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "An error occurred");
       }
     });
   }

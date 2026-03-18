@@ -59,7 +59,7 @@ export function SlideBlockers({ plans }: { plans: PlanSummary[] }) {
             {col.items.length === 0
               ? <p style={{ fontSize: 11, color: P.muted, fontStyle: "italic" }}>None.</p>
               : <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  {col.items.slice(0, 5).map((t, i) => <TaskRow key={t.id} task={t as any} idx={i} />)}
+                  {col.items.slice(0, 5).map((t, i) => <TaskRow key={t.id} task={t} idx={i} />)}
                   {col.items.length > 5 && <p style={{ fontSize: 10, color: P.muted }}>+{col.items.length - 5} more</p>}
                 </div>
             }

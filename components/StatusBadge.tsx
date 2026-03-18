@@ -42,7 +42,7 @@ export default function StatusBadge({ taskId, status, planType, readonly }: Prop
       try {
         await updateStatus(taskId, next, planType);
         toast.success(`Status updated to ${CONFIG[next].label}`);
-      } catch (err) {
+      } catch {
         toast.error("Failed to update status");
       }
     });

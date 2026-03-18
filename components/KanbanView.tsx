@@ -15,7 +15,6 @@ import {
   User,
   Calendar,
   Layers,
-  MoreVertical,
   Activity
 } from "lucide-react";
 import AddTaskInline from "./AddTaskInline";
@@ -30,7 +29,7 @@ export default function KanbanView({ plan }: { plan: Plan }) {
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isPanelOpen, setIsPanelOpen] = useState(false);
 
-    const columns: { id: string, label: string, icon: any, colorClass: string, glowClass: string, statuses: TaskStatus[] }[] = [
+    const columns: { id: string, label: string, icon: React.ElementType, colorClass: string, glowClass: string, statuses: TaskStatus[] }[] = [
         {
             id: "todo",
             label: "Backlog",
@@ -75,7 +74,7 @@ export default function KanbanView({ plan }: { plan: Plan }) {
             await updateTaskStatus(draggingId, nextStatus);
             toast.success(`Task shifted to ${columns.find(c => c.id === targetStatus)?.label}`);
             router.refresh();
-        } catch (err) {
+        } catch (err: unknown) {
             console.error(err);
             toast.error("Protocol failure: Re-routing impossible");
         } finally {
@@ -250,12 +249,3 @@ export default function KanbanView({ plan }: { plan: Plan }) {
     );
 }
 
-function TaskSidePanelWrapper({ task, isOpen, onClose }: { task: Task | null, isOpen: boolean, onClose: () => void }) {
-    return (
-        <TaskSidePanel
-            task={task}
-            isOpen={isOpen}
-            onClose={onClose}
-        />
-    );
-}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import type { TaskAttachment } from "@/lib/types";
 import { toast } from "sonner";
@@ -33,18 +33,18 @@ export default function TaskAttachments({ taskId }: { taskId: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const sb = getSupabaseBrowserClient();
 
-  useEffect(() => {
-    load();
-  }, [taskId]);
-
-  async function load() {
+  const load = useCallback(async () => {
     const { data } = await sb
       .from("task_attachments")
       .select("*")
       .eq("task_id", taskId)
       .order("created_at", { ascending: false });
     setAttachments((data ?? []) as TaskAttachment[]);
-  }
+  }, [sb, taskId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   async function uploadFile(file: File) {
     if (file.size > MAX_MB * 1024 * 1024) {
@@ -85,8 +85,8 @@ export default function TaskAttachments({ taskId }: { taskId: string }) {
 
       toast.success(`${file.name} uploaded`);
       await load();
-    } catch (err: any) {
-      toast.error(err?.message ?? "Upload failed");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
     }

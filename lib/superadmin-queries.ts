@@ -51,7 +51,7 @@ export async function listAllOrgs(): Promise<OrgWithStats[]> {
   if (error) throw new Error(error.message);
 
   // Batch member and project counts
-  const orgIds = (orgs ?? []).map((o: any) => o.id);
+  const orgIds = (orgs ?? []).map((o: { id: string }) => o.id);
   if (!orgIds.length) return [];
 
   const [{ data: members }, { data: projects }] = await Promise.all([
@@ -59,17 +59,27 @@ export async function listAllOrgs(): Promise<OrgWithStats[]> {
     admin.from("projects").select("organization_id").in("organization_id", orgIds),
   ]);
 
-  const memberCountMap = (members ?? []).reduce((acc: Record<string, number>, p: any) => {
+  const memberCountMap = (members ?? []).reduce((acc: Record<string, number>, p: { organization_id: string | null }) => {
+    if (p.organization_id) {
+      acc[p.organization_id] = (acc[p.organization_id] || 0) + 1;
+    }
+    return acc;
+  }, {});
+
+  const projectCountMap = (projects ?? []).reduce((acc: Record<string, number>, p: { organization_id: string }) => {
     acc[p.organization_id] = (acc[p.organization_id] || 0) + 1;
     return acc;
   }, {});
 
-  const projectCountMap = (projects ?? []).reduce((acc: Record<string, number>, p: any) => {
-    acc[p.organization_id] = (acc[p.organization_id] || 0) + 1;
-    return acc;
-  }, {});
-
-  return (orgs ?? []).map((o: any) => ({
+  return (orgs ?? []).map((o: {
+    id: string;
+    name: string;
+    domain: string | null;
+    created_at: string;
+    license_key: string | null;
+    license_type: 'standard' | 'freemium';
+    license_expires_at: string | null;
+  }) => ({
     ...o,
     member_count: memberCountMap[o.id] || 0,
     project_count: projectCountMap[o.id] || 0,

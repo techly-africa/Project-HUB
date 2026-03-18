@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Task, TaskComment, Profile, TaskStatus as TStatus } from "@/lib/types";
 import { getTaskComments, addTaskComment, getProfiles, assignTask, updateTaskDates, updateTaskStatus } from "@/lib/queries";
@@ -51,17 +51,7 @@ export default function TaskSidePanel({ task, isOpen, onClose }: Props) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const router = useRouter();
 
-    useEffect(() => {
-        setMounted(true);
-        if (isOpen && task) {
-            loadDetails();
-            document.body.style.overflow = "hidden";
-        } else {
-            document.body.style.overflow = "unset";
-        }
-    }, [isOpen, task]);
-
-    async function loadDetails() {
+    const loadDetails = useCallback(async () => {
         if (!task) return;
         setIsLoading(true);
         try {
@@ -76,7 +66,17 @@ export default function TaskSidePanel({ task, isOpen, onClose }: Props) {
         } finally {
             setIsLoading(false);
         }
-    }
+    }, [task]);
+
+    useEffect(() => {
+        setMounted(true);
+        if (isOpen && task) {
+            loadDetails();
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "unset";
+        }
+    }, [isOpen, task, loadDetails]);
 
     // ── @mention detection ────────────────────────────────────────────────────
 
@@ -145,7 +145,7 @@ export default function TaskSidePanel({ task, isOpen, onClose }: Props) {
             const updated = await getTaskComments(task.id);
             setComments(updated);
             toast.success("Comment added");
-        } catch (err) {
+        } catch {
             toast.error("Failed to add comment");
         } finally {
             setIsSubmitting(false);
@@ -158,7 +158,7 @@ export default function TaskSidePanel({ task, isOpen, onClose }: Props) {
             await updateTaskStatus(task.id, status);
             toast.success(`Status updated to ${status.replace('_', ' ')}`);
             router.refresh();
-        } catch (err) {
+        } catch {
             toast.error("Failed to update status");
         }
     }

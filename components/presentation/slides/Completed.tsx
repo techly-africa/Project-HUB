@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import type { PlanSummary } from "../buildSlides";
 import { P, MOTION } from "../tokens";
-import { SlideShell, SlideHeader, Card, CardLabel, TaskRow } from "../primitives";
+import { SlideShell, SlideHeader, TaskRow } from "../primitives";
 import { useCountUp } from "../hooks";
 
 export function SlideCompleted({ plans }: { plans: PlanSummary[] }) {

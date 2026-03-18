@@ -21,8 +21,8 @@ export default function LicenseManager({ orgId, currentType, currentExpiry, lice
       try {
         await updateOrgLicenseAction(orgId, type, days);
         toast.success(`License updated to ${type}`);
-      } catch (err: any) {
-        toast.error(err.message);
+      } catch {
+        toast.error("Failed to revoke license");
       }
     });
   }

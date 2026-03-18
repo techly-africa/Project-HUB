@@ -2,18 +2,24 @@
 
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  AreaChart, Area, Cell, PieChart, Pie,
+  Cell, PieChart, Pie,
 } from "recharts";
 import { motion } from "framer-motion";
 import { P, CHART_COLORS, MOTION } from "./tokens";
 
 // ── Shared tooltip ────────────────────────────────────────────────────────────
-const TooltipBox = ({ active, payload, label }: any) => {
+interface TooltipEntry {
+  color?: string;
+  value: number | string;
+  name?: string;
+}
+
+const TooltipBox = ({ active, payload, label }: { active?: boolean; payload?: TooltipEntry[]; label?: string }) => {
   if (!active || !payload?.length) return null;
   return (
     <div style={{ background: P.slateLight, border: `1px solid ${P.border}`, borderRadius: 9, padding: "8px 12px" }}>
       {label && <p style={{ fontSize: 10, color: P.muted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 }}>{label}</p>}
-      {payload.map((entry: any, i: number) => (
+      {payload.map((entry, i) => (
         <p key={i} style={{ fontSize: 12, fontWeight: 700, color: entry.color ?? P.gold }}>
           {typeof entry.value === "number" && entry.name?.includes("pct") ? `${entry.value}%` : entry.value}
         </p>

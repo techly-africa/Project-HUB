@@ -12,7 +12,6 @@ import {
   UploadCloud,
   Paperclip,
   BarChart2,
-  Download,
   Trash2,
   ChevronRight,
   Layers,
@@ -135,8 +134,8 @@ export default function DocumentRepository({ initialDocuments, initialFolders, t
         setNewFolderName("");
         setShowNewFolder(false);
         toast.success(`Folder "${name}" created`);
-      } catch (err: any) {
-        toast.error(err?.message ?? "Failed to create folder");
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "Failed to create folder");
       }
     });
   }
@@ -149,8 +148,8 @@ export default function DocumentRepository({ initialDocuments, initialFolders, t
         setDocs(prev => prev.map(d => d.folder_id === folder.id ? { ...d, folder_id: null } : d));
         setConfirmDeleteFolder(null);
         toast.success(`Folder "${folder.name}" deleted`);
-      } catch (err: any) {
-        toast.error(err?.message ?? "Delete failed");
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "Delete failed");
       }
     });
   }
@@ -185,8 +184,8 @@ export default function DocumentRepository({ initialDocuments, initialFolders, t
       });
       setDocs(prev => [doc, ...prev]);
       toast.success(`${file.name} uploaded`);
-    } catch (err: any) {
-      toast.error(err?.message ?? "Upload failed");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
     }
@@ -211,8 +210,8 @@ export default function DocumentRepository({ initialDocuments, initialFolders, t
         });
         setDocs(prev => [doc, ...prev]);
         toast.success(`"${att.name}" linked from task`);
-      } catch (err: any) {
-        toast.error(err?.message ?? "Link failed");
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "Link failed");
       }
     });
   }
@@ -234,8 +233,8 @@ export default function DocumentRepository({ initialDocuments, initialFolders, t
         setDocs(prev => prev.filter(d => d.id !== doc.id));
         setConfirmDelete(null);
         toast.success("File deleted");
-      } catch (err: any) {
-        toast.error(err?.message ?? "Delete failed");
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "Delete failed");
       }
     });
   }
@@ -246,8 +245,8 @@ export default function DocumentRepository({ initialDocuments, initialFolders, t
         await moveDocumentAction(doc.id, folderId);
         setDocs(prev => prev.map(d => (d.id === doc.id ? { ...d, folder_id: folderId } : d)));
         toast.success("File moved");
-      } catch (err: any) {
-        toast.error(err?.message ?? "Move failed");
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "Move failed");
       }
     });
   }

@@ -57,7 +57,7 @@ export default function PlanView({ plan }: { plan: Plan }) {
     };
   }, [plan, searchQuery, statusFilter]);
 
-  const { total, done, inProg, blocked } = calcStats(plan);
+  const { total, done, inProg } = calcStats(plan);
   const pct = total ? Math.round((done / total) * 100) : 0;
   const barColor = plan.color ?? "bg-brand-blue";
 
@@ -101,7 +101,7 @@ export default function PlanView({ plan }: { plan: Plan }) {
                 ].map((v) => (
                   <button
                     key={v.id}
-                    onClick={() => setView(v.id as any)}
+                    onClick={() => setView(v.id as "list" | "kanban" | "timeline")}
                     className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${view === v.id ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
                       }`}
                   >
@@ -133,7 +133,7 @@ export default function PlanView({ plan }: { plan: Plan }) {
                 <div className="relative">
                   <select
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value as any)}
+                    onChange={(e) => setStatusFilter(e.target.value as TaskStatus | "all")}
                     className="appearance-none bg-slate-100 border-none rounded-xl pl-4 pr-10 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 focus:ring-2 focus:ring-brand-teal transition-all cursor-pointer"
                   >
                     <option value="all">All Status</option>

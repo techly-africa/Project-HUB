@@ -33,8 +33,8 @@ export default function MembersManager({ members, currentUserId }: Props) {
         setInviteName("");
         setShowInvite(false);
         router.refresh();
-      } catch (err: any) {
-        toast.error(err.message ?? "Failed to send invitation");
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "Failed to send invitation");
       }
     });
   }
@@ -44,8 +44,8 @@ export default function MembersManager({ members, currentUserId }: Props) {
       try {
         await resetUserPasswordAction(member.id, member.email, member.full_name ?? "");
         toast.success(`Password reset email sent to ${member.email}`);
-      } catch (err: any) {
-        toast.error(err.message ?? "Failed to send reset email");
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "Failed to send reset email");
       }
     });
   }
@@ -57,8 +57,8 @@ export default function MembersManager({ members, currentUserId }: Props) {
         toast.success("User removed");
         setConfirmDelete(null);
         router.refresh();
-      } catch (err: any) {
-        toast.error(err.message ?? "Failed to remove user");
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "Failed to remove user");
       }
     });
   }
@@ -75,8 +75,8 @@ export default function MembersManager({ members, currentUserId }: Props) {
       try {
         await updateMemberNameAction(memberId, editingName);
         router.refresh();
-      } catch (err: any) {
-        toast.error(err.message ?? "Failed to update name");
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "Failed to update name");
       }
     });
   }
@@ -189,7 +189,7 @@ export default function MembersManager({ members, currentUserId }: Props) {
             onClick={e => e.stopPropagation()}
           >
             <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Invite member</h2>
-            <p className="text-sm text-slate-400 mb-6">They'll receive an email to set their password.</p>
+            <p className="text-sm text-slate-400 mb-6">They&apos;ll receive an email to set their password.</p>
 
             <div className="space-y-4">
               <div>

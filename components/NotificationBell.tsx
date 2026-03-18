@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import type { Notification } from "@/lib/notifications";
-import { markAllReadAction, markNotificationReadAction } from "@/lib/notifications";
+import { markAllReadAction } from "@/lib/notifications";
 import { formatDistanceToNow } from "date-fns";
 import { useRouter } from "next/navigation";
 import NotificationModal from "./NotificationModal";

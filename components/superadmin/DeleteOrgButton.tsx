@@ -17,8 +17,8 @@ export default function DeleteOrgButton({ id, name }: { id: string; name: string
         await deleteOrgAction(id);
         toast.success(`Organization ${name} deleted`);
         router.push("/superadmin/organizations");
-      } catch (err: any) {
-        toast.error(err.message);
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "Failed to delete organization");
       }
     });
   }

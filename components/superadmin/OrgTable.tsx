@@ -19,8 +19,8 @@ export default function OrgTable({ initialOrgs }: { initialOrgs: OrgWithStats[] 
     try {
       await deleteOrgAction(id);
       toast.success(`Organization ${name} deleted`);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to update status");
     }
   }
 

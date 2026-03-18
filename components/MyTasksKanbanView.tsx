@@ -13,8 +13,7 @@ import {
   User,
   Calendar,
   Layers,
-  Activity,
-  AlertCircle
+  Activity
 } from "lucide-react";
 import TaskSidePanel from "./TaskSidePanel";
 
@@ -25,7 +24,7 @@ export default function MyTasksKanbanView({ tasks }: { tasks: Task[] }) {
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isPanelOpen, setIsPanelOpen] = useState(false);
 
-    const columns: { id: string, label: string, icon: any, colorClass: string, glowClass: string, statuses: TaskStatus[] }[] = [
+    const columns: { id: string, label: string, icon: React.ElementType, colorClass: string, glowClass: string, statuses: TaskStatus[] }[] = [
         {
             id: "todo",
             label: "Backlog",
@@ -117,7 +116,7 @@ export default function MyTasksKanbanView({ tasks }: { tasks: Task[] }) {
                                         const isCritical = task.status === 'critical';
                                         
                                         // Cast phase for type safety since we hydrated it in query
-                                        const phaseInfo = (task as any).phase;
+                                        const phaseInfo = (task as Task & { phase?: { id: string; name: string; plan: { id: string; name: string; color: string } } }).phase;
                                         const planName = phaseInfo?.plan?.name || "Global";
                                         const planColor = phaseInfo?.plan?.color || "#94a3b8";
 

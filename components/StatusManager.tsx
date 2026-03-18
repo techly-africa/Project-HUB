@@ -39,8 +39,8 @@ export default function StatusManager({ statuses }: Props) {
         toast.success("Status updated");
         setEditingId(null);
         router.refresh();
-      } catch (err: any) {
-        toast.error(err.message ?? "Failed to update status");
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "Failed to update status");
       }
     });
   }
@@ -52,8 +52,8 @@ export default function StatusManager({ statuses }: Props) {
         toast.success("Status deleted");
         setConfirmDelete(null);
         router.refresh();
-      } catch (err: any) {
-        toast.error(err.message ?? "Failed to delete status");
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "Failed to delete status");
       }
     });
   }
@@ -75,8 +75,8 @@ export default function StatusManager({ statuses }: Props) {
         setNewColor("#64748b");
         setShowAdd(false);
         router.refresh();
-      } catch (err: any) {
-        toast.error(err.message ?? "Failed to add status");
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "Failed to add status");
       }
     });
   }

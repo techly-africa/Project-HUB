@@ -28,13 +28,6 @@ export function TimelineItem({
     warning: "border-accent-warning shadow-[0_0_15px_rgba(245,158,11,0.3)]",
   };
 
-  const dotColors = {
-    default: "bg-muted",
-    active: "bg-accent-primary",
-    danger: "bg-accent-secondary",
-    success: "bg-accent-success",
-    warning: "bg-accent-warning",
-  };
 
   const formattedDate = date instanceof Date 
     ? date.toLocaleDateString("en-GB", { day: "numeric", month: "short" })

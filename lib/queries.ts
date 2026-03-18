@@ -1,61 +1,62 @@
 "use server";
 
 import { createSupabaseServerClient } from "./supabase-server";
+import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import type { Document, DocumentFolder, Organization, Phase, Plan, PlanType, Profile, Project, ProjectStats, Task, TaskAttachmentWithContext, TaskComment, TaskStatus, TaskStatusConfig } from "./types";
 import { notifyTaskAssigned, notifyTaskComment, notifyTaskMention, notifyTaskStatusChanged } from "./notifications";
 
-function handleSupabaseError(error: any) {
+function handleSupabaseError(error: PostgrestError | Error | null) {
   if (error) {
     console.error("Supabase Error Full Diagnostic:", error instanceof Error ? { ...error, message: error.message, stack: error.stack } : JSON.stringify(error, null, 2));
     const message = error.message || "An unexpected database error occurred.";
-    const err = new Error(message);
-    (err as any).details = error.details;
-    (err as any).hint = error.hint;
-    (err as any).code = error.code;
+    const err = new Error(message) as Error & { details?: string; hint?: string; code?: string };
+    if (error && 'details' in error) err.details = error.details as string;
+    if (error && 'hint' in error) err.hint = error.hint as string;
+    if (error && 'code' in error) err.code = error.code as string;
     throw err;
   }
 }
 
 // ─── Shared helper to hydrate phases + tasks for a plan row ──────────────────
 // profileMap is pre-fetched by callers to avoid one extra query per plan call.
-async function hydratePlan(sb: any, plan: any, profileMap: Record<string, any>): Promise<Plan> {
+async function hydratePlan(sb: SupabaseClient, plan: { id: string; color?: string; project_id?: string }, profileMap: Record<string, Profile>): Promise<Plan> {
   const { data: phases, error: pe } = await sb.from("phases").select("*").eq("plan_id", plan.id).order("display_order");
   handleSupabaseError(pe);
 
   if (!phases?.length) {
-    return { ...plan, color: plan.color ?? "bg-brand-blue", project_id: plan.project_id ?? "", phases: [] } as Plan;
+    return { ...plan, color: plan.color ?? "bg-brand-blue", project_id: plan.project_id ?? "", phases: [] } as unknown as Plan;
   }
 
-  const phaseIds = phases.map((ph: any) => ph.id);
+  const phaseIds = phases.map((ph: Phase) => ph.id);
 
   // Batch: single query for all tasks across all phases (replaces N per-phase queries)
   const { data: allTasks, error: te } = await sb.from("tasks").select("*").in("phase_id", phaseIds).order("wbs");
   handleSupabaseError(te);
 
-  const taskIds = (allTasks ?? []).map((t: any) => t.id);
+  const taskIds = (allTasks ?? []).map((t: Task) => t.id);
 
   // Batch: single query for all comment counts across all tasks
   const { data: counts } = taskIds.length > 0
     ? await sb.from("task_comments").select("task_id").in("task_id", taskIds)
     : { data: [] };
 
-  const countMap = (counts ?? []).reduce((acc: any, curr: any) => {
+  const countMap = (counts ?? []).reduce((acc: Record<string, number>, curr: { task_id: string }) => {
     acc[curr.task_id] = (acc[curr.task_id] || 0) + 1;
     return acc;
   }, {});
 
   // Group hydrated tasks by phase
-  const tasksByPhase = (allTasks ?? []).reduce((acc: any, t: any) => {
+  const tasksByPhase = (allTasks ?? []).reduce((acc: Record<string, Task[]>, t: Task) => {
     if (!acc[t.phase_id]) acc[t.phase_id] = [];
     acc[t.phase_id].push({
       ...t,
-      assignee: t.assigned_to ? profileMap[t.assigned_to] : null,
+      assignee: t.assigned_to ? profileMap[t.assigned_to] : undefined,
       comment_count: countMap[t.id] || 0,
     });
     return acc;
   }, {});
 
-  const phasesWithTasks: Phase[] = phases.map((ph: any) => ({
+  const phasesWithTasks: Phase[] = phases.map((ph: Phase) => ({
     ...ph,
     tasks: (tasksByPhase[ph.id] ?? []) as Task[],
   }));
@@ -151,8 +152,8 @@ export async function getPlansByProject(projectId: string): Promise<Plan[]> {
     sb.from("profiles").select("*"),
   ]);
   handleSupabaseError(error);
-  const profileMap = Object.fromEntries((profiles ?? []).map((p: any) => [p.id, p]));
-  return Promise.all((planRows ?? []).map((p: any) => hydratePlan(sb, p, profileMap)));
+  const profileMap = Object.fromEntries((profiles ?? []).map((p: Profile) => [p.id, p]));
+  return Promise.all((planRows ?? []).map((p: Plan) => hydratePlan(sb, p, profileMap)));
 }
 
 export async function getPlanById(id: string): Promise<Plan> {
@@ -163,7 +164,7 @@ export async function getPlanById(id: string): Promise<Plan> {
   ]);
   handleSupabaseError(error);
   if (!plan) throw new Error(`No plan found with id '${id}'.`);
-  const profileMap = Object.fromEntries((profiles ?? []).map((p: any) => [p.id, p]));
+  const profileMap = Object.fromEntries((profiles ?? []).map((p: Profile) => [p.id, p]));
   return hydratePlan(sb, plan, profileMap);
 }
 
@@ -194,7 +195,7 @@ export async function getPlanByType(type: PlanType): Promise<Plan> {
   ]);
   handleSupabaseError(error);
   if (!plan) throw new Error(`No plan found for type '${type}'. Please run the seed script.`);
-  const profileMap = Object.fromEntries((profiles ?? []).map((p: any) => [p.id, p]));
+  const profileMap = Object.fromEntries((profiles ?? []).map((p: Profile) => [p.id, p]));
   return hydratePlan(sb, plan, profileMap);
 }
 
@@ -267,7 +268,7 @@ export async function getMyTasks(): Promise<Task[]> {
     .order("deadline", { ascending: true });
 
   handleSupabaseError(error);
-  return (data ?? []) as any[];
+  return (data ?? []) as Task[];
 }
 
 export async function createTask(
@@ -467,7 +468,7 @@ export async function getTaskComments(taskId: string): Promise<TaskComment[]> {
     .eq("task_id", taskId)
     .order("created_at", { ascending: true });
   handleSupabaseError(error);
-  return (data ?? []) as any[];
+  return (data ?? []) as TaskComment[];
 }
 
 // ─── Task Statuses ────────────────────────────────────────────────────────────
@@ -596,7 +597,24 @@ export async function getTaskAttachmentsWithContext(): Promise<TaskAttachmentWit
     .order("created_at", { ascending: false });
   handleSupabaseError(error);
 
-  return (data ?? []).map((row: any) => ({
+  return (data ?? []).map((row: {
+    id: string;
+    name: string;
+    storage_path: string;
+    size: number | null;
+    mime_type: string | null;
+    uploaded_by: string | null;
+    created_at: string;
+    task: {
+      id: string;
+      name: string;
+      phase: {
+        plan: {
+          name: string;
+        }
+      }
+    } | null;
+  }) => ({
     id: row.id,
     task_id: row.task?.id ?? "",
     task_name: row.task?.name ?? "Unknown task",

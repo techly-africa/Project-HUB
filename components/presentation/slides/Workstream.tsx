@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import type { Plan, ProjectStats } from "@/lib/types";
 import { P, MOTION } from "../tokens";
-import { SlideShell, SlideHeader, Bar, CardLabel } from "../primitives";
+import { SlideShell, SlideHeader, Bar } from "../primitives";
 import { useCountUp } from "../hooks";
 
 export function SlideWorkstream({ plan, stats }: { plan: Plan; stats: ProjectStats }) {

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import type { Project } from "@/lib/types";
 import type { PlanSummary } from "../buildSlides";
 import { P, MOTION } from "../tokens";
-import { SlideShell, SlideHeader, Bar, KpiCard, ArcProgress, fmtDate } from "../primitives";
+import { SlideShell, Bar, KpiCard, ArcProgress, fmtDate } from "../primitives";
 import { WorkstreamChart } from "../charts";
 
 export function SlideOverview({ project, plans }: { project: Project; plans: PlanSummary[] }) {

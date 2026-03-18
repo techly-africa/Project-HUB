@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createTask } from "@/lib/queries";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, X, Save } from "lucide-react";
+import { Plus, Save } from "lucide-react";
 
 export default function AddTaskInline({ phaseId, phaseWbs, taskCount, onCancel, onSuccess }: { phaseId: string; phaseWbs: string; taskCount: number; onCancel?: () => void; onSuccess?: () => void }) {
     const [isAdding, setIsAdding] = useState(!onCancel);

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { Plan, Project, ProjectStats } from "@/lib/types";
+import type { Plan, ProjectStats } from "@/lib/types";
 import { motion } from "framer-motion";
 
 interface Props {

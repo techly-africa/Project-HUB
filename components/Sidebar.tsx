@@ -1,4 +1,4 @@
-import { getProjects, getPlansByProject, getProfiles } from "@/lib/queries";
+import { getProjects, getPlansByProject } from "@/lib/queries";
 import { getActiveProjectId } from "@/lib/active-project";
 import BrandLogo from "./BrandLogo";
 import ProjectSwitcher from "./ProjectSwitcher";
@@ -13,7 +13,7 @@ export default async function Sidebar() {
 
   let projects: Awaited<ReturnType<typeof getProjects>> = [];
   let rawActiveId: string | null = null;
-  let currentProfile: any = null;
+  let currentProfile: { is_superadmin: boolean } | null = null;
 
   try {
     const results = await Promise.all([

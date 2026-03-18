@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import { switchProject } from "@/app/actions/project";
 import { createProject } from "@/lib/queries";
 import type { Project } from "@/lib/types";
-import { useRouter } from "next/navigation";
 
 interface Props {
   projects: Project[];
@@ -17,7 +16,6 @@ export default function ProjectSwitcher({ projects, activeProjectId }: Props) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [isPending, startTransition] = useTransition();
-  const router = useRouter();
 
   const active = projects.find(p => p.id === activeProjectId) ?? projects[0];
 

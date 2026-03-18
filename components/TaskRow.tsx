@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { Task, TaskComment, Profile } from "@/lib/types";
 import StatusBadge from "./StatusBadge";
 import { getTaskComments, addTaskComment, getProfiles, assignTask, setTaskDeadline, updateTaskDates, deleteTask, updateTaskDetails } from "@/lib/queries";
@@ -59,13 +59,7 @@ export default function TaskRow({ task, planType, allTasks }: Props) {
     }
   }
 
-  useEffect(() => {
-    if (open) {
-      loadDetails();
-    }
-  }, [open]);
-
-  async function loadDetails() {
+  const loadDetails = useCallback(async () => {
     setIsLoadingComments(true);
     try {
       const [cms, prs] = await Promise.all([
@@ -79,7 +73,13 @@ export default function TaskRow({ task, planType, allTasks }: Props) {
     } finally {
       setIsLoadingComments(false);
     }
-  }
+  }, [task.id]);
+
+  useEffect(() => {
+    if (open) {
+      loadDetails();
+    }
+  }, [open, loadDetails]);
 
   async function handleAddComment(e: React.FormEvent) {
     e.preventDefault();
@@ -242,7 +242,7 @@ export default function TaskRow({ task, planType, allTasks }: Props) {
                     await updateTaskDates(task.id, e.target.value || null, task.end_date);
                     toast.success("Start date updated");
                     router.refresh();
-                  } catch (err) {
+                  } catch {
                     toast.error("Failed to update start date");
                   }
                 }}
@@ -358,7 +358,7 @@ export default function TaskRow({ task, planType, allTasks }: Props) {
                         await updateTaskBlockedBy(task.id, newBlockedBy);
                         toast.success("Blocker added");
                         router.refresh();
-                      } catch (err) {
+                      } catch {
                         toast.error("Failed to add blocker");
                       }
                     }}
@@ -392,7 +392,7 @@ export default function TaskRow({ task, planType, allTasks }: Props) {
                               await updateTaskBlockedBy(task.id, newBlockedBy);
                               toast.success("Blocker removed");
                               router.refresh();
-                            } catch (err) {
+                            } catch {
                               toast.error("Failed to remove blocker");
                             }
                           }}

@@ -23,9 +23,9 @@ export default function ForgotPasswordPage() {
         setState("error");
         setError("Something went wrong. Please try again.");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setState("error");
-      setError(err.message || "Failed to send reset link");
+      setError(err instanceof Error ? err.message : "Failed to send reset link");
     }
   }
 
@@ -62,7 +62,7 @@ export default function ForgotPasswordPage() {
             <>
               <h2 className="text-slate-900 font-bold text-xl mb-2">Forgot password?</h2>
               <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-                Enter your email address and we'll send you a link to reset your password.
+                Enter your email address and we&apos;ll send you a link to reset your password.
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-5">

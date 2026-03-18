@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import type { PlanSummary } from "../buildSlides";
 import { P, MOTION } from "../tokens";
-import { SlideShell, SlideHeader, TaskRow, fmtDate } from "../primitives";
+import { SlideShell, SlideHeader, TaskRow } from "../primitives";
 
 export function SlideUpcoming({ plans }: { plans: PlanSummary[] }) {
   const now  = new Date();
@@ -42,7 +42,7 @@ export function SlideUpcoming({ plans }: { plans: PlanSummary[] }) {
               Overdue — Requires Escalation
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              {overdue.map((t, i) => <TaskRow key={t.id} task={t as any} idx={i} />)}
+              {overdue.map((t, i) => <TaskRow key={t.id} task={t} idx={i} />)}
             </div>
           </motion.div>
         )}
@@ -56,7 +56,7 @@ export function SlideUpcoming({ plans }: { plans: PlanSummary[] }) {
               Due in 14 Days
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              {upcoming.slice(0, 9).map((t, i) => <TaskRow key={t.id} task={t as any} idx={i} />)}
+              {upcoming.slice(0, 9).map((t, i) => <TaskRow key={t.id} task={t} idx={i} />)}
             </div>
           </motion.div>
         )}

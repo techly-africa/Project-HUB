@@ -1,0 +1,172 @@
+
+> rukisha@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.35
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+
+Failed to compile.
+
+./app/forgot-password/page.tsx
+26:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+65:48  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./app/layout.tsx
+21:9  Warning: Custom fonts not added in `pages/_document.js` will only load for a single page. This is discouraged. See: https://nextjs.org/docs/messages/no-page-custom-font  @next/next/no-page-custom-font
+
+./components/AddTaskInline.tsx
+7:16  Error: 'X' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/DocumentRepository.tsx
+15:3  Error: 'Download' is defined but never used.  @typescript-eslint/no-unused-vars
+138:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+152:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+188:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+214:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+237:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+249:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/GanttChart.tsx
+11:3  Error: 'startOfISOWeek' is defined but never used.  @typescript-eslint/no-unused-vars
+12:3  Error: 'addWeeks' is defined but never used.  @typescript-eslint/no-unused-vars
+17:3  Error: 'isSameDay' is defined but never used.  @typescript-eslint/no-unused-vars
+18:3  Error: 'differenceInWeeks' is defined but never used.  @typescript-eslint/no-unused-vars
+19:3  Error: 'differenceInMonths' is defined but never used.  @typescript-eslint/no-unused-vars
+21:3  Error: 'startOfYear' is defined but never used.  @typescript-eslint/no-unused-vars
+22:3  Error: 'endOfYear' is defined but never used.  @typescript-eslint/no-unused-vars
+23:3  Error: 'isWithinInterval' is defined but never used.  @typescript-eslint/no-unused-vars
+29:18  Error: 'AnimatePresence' is defined but never used.  @typescript-eslint/no-unused-vars
+31:3  Error: 'ChevronLeft' is defined but never used.  @typescript-eslint/no-unused-vars
+32:3  Error: 'ChevronRight' is defined but never used.  @typescript-eslint/no-unused-vars
+34:15  Error: 'CalendarIcon' is defined but never used.  @typescript-eslint/no-unused-vars
+35:3  Error: 'Maximize2' is defined but never used.  @typescript-eslint/no-unused-vars
+110:9  Error: 'rowHeight' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+117:9  Error: 'pxToDate' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+153:30  Error: 'e' is defined but never used.  @typescript-eslint/no-unused-vars
+183:18  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+203:9  Error: 'currentY' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+203:9  Error: 'currentY' is never reassigned. Use 'const' instead.  prefer-const
+279:70  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/IntelligenceLayer.tsx
+2:21  Error: 'Project' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/KanbanView.tsx
+18:3  Error: 'MoreVertical' is defined but never used.  @typescript-eslint/no-unused-vars
+33:55  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+253:10  Error: 'TaskSidePanelWrapper' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/MembersManager.tsx
+36:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+47:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+60:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+78:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+107:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+192:60  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./components/MyTasksKanbanView.tsx
+17:3  Error: 'AlertCircle' is defined but never used.  @typescript-eslint/no-unused-vars
+28:55  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+120:68  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/NotificationBell.tsx
+5:29  Error: 'markNotificationReadAction' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/PhaseCard.tsx
+5:10  Error: 'createTask' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/PlanView.tsx
+60:32  Error: 'blocked' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+104:52  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+136:72  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/ProjectSwitcher.tsx
+20:9  Error: 'router' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./components/Sidebar.tsx
+1:42  Error: 'getProfiles' is defined but never used.  @typescript-eslint/no-unused-vars
+16:23  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/StatusBadge.tsx
+45:16  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/StatusManager.tsx
+42:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+55:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+78:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/StatusUpdateModal.tsx
+81:6  Warning: React Hook useEffect has a missing dependency: 'toggleFullscreen'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/TaskAttachments.tsx
+38:6  Warning: React Hook useEffect has a missing dependency: 'load'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+88:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/TaskRow.tsx
+66:6  Warning: React Hook useEffect has a missing dependency: 'loadDetails'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+245:28  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+361:32  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+395:38  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/TaskSidePanel.tsx
+62:8  Warning: React Hook useEffect has a missing dependency: 'loadDetails'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+148:18  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+161:18  Error: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/presentation/buildSlides.tsx
+4:10  Error: 'today' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/presentation/charts.tsx
+5:3  Error: 'AreaChart' is defined but never used.  @typescript-eslint/no-unused-vars
+5:14  Error: 'Area' is defined but never used.  @typescript-eslint/no-unused-vars
+11:49  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+16:28  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/presentation/slides/Blockers.tsx
+62:87  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/presentation/slides/Completed.tsx
+6:35  Error: 'Card' is defined but never used.  @typescript-eslint/no-unused-vars
+6:41  Error: 'CardLabel' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/presentation/slides/Overview.tsx
+7:22  Error: 'SlideHeader' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/presentation/slides/Upcoming.tsx
+6:44  Error: 'fmtDate' is defined but never used.  @typescript-eslint/no-unused-vars
+45:69  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+59:82  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/presentation/slides/Workstream.tsx
+6:40  Error: 'CardLabel' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/primitives/TimelineItem.tsx
+31:9  Error: 'dotColors' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./components/superadmin/CreateOrgModal.tsx
+19:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/superadmin/DeleteOrgButton.tsx
+20:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/superadmin/InviteMemberModal.tsx
+27:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/superadmin/LicenseManager.tsx
+24:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/superadmin/MemberRow.tsx
+5:10  Error: 'format' is defined but never used.  @typescript-eslint/no-unused-vars
+25:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+37:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+48:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+59:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./components/superadmin/OrgTable.tsx
+22:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules

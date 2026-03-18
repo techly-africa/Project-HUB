@@ -1,7 +1,6 @@
 "use client";
 
 import type { Plan, ProjectStats, Project } from "@/lib/types";
-import { today } from "./primitives";
 import { SlideOverview }    from "./slides/Overview";
 import { SlideCompleted }   from "./slides/Completed";
 import { SlideInProgress }  from "./slides/InProgress";

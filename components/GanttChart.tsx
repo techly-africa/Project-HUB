@@ -8,31 +8,19 @@ import {
   startOfMonth,
   addDays,
   isToday,
-  startOfISOWeek,
-  addWeeks,
   eachDayOfInterval,
   eachWeekOfInterval,
   eachMonthOfInterval,
   endOfMonth,
-  isSameDay,
-  differenceInWeeks,
-  differenceInMonths,
-  addMonths,
-  startOfYear,
-  endOfYear,
-  isWithinInterval
+  addMonths
 } from "date-fns";
 import TaskSidePanel from "./TaskSidePanel";
 import { updateTaskDates } from "@/lib/queries";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
-  ChevronLeft,
-  ChevronRight,
   Target,
-  Calendar as CalendarIcon,
-  Maximize2,
   Filter,
   Search,
   MoreHorizontal,
@@ -107,17 +95,12 @@ export default function GanttChart({ phases, showFilter = true }: GanttChartProp
   }, []);
 
   const colWidth = COLUMN_WIDTHS[zoom];
-  const rowHeight = 48; // Standard Asana row height
 
   const dateToPx = useCallback((date: Date) => {
     const days = differenceInDays(date, chartStart);
     return days * (colWidth / (zoom === 'day' ? 1 : zoom === 'week' ? 7 : 30));
   }, [chartStart, colWidth, zoom]);
 
-  const pxToDate = useCallback((px: number) => {
-    const days = px / (colWidth / (zoom === 'day' ? 1 : zoom === 'week' ? 7 : 30));
-    return addDays(chartStart, Math.round(days));
-  }, [chartStart, colWidth, zoom]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     if (headerRef.current) headerRef.current.scrollLeft = e.currentTarget.scrollLeft;
@@ -150,11 +133,8 @@ export default function GanttChart({ phases, showFilter = true }: GanttChartProp
   };
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!dragTask) return;
-      // Real-time visual feedback handled by local state in Row if we wanted, 
-      // but for simplicity we'll just handle the drop. 
-      // High-perf asana clone would use a ghost element.
+    const handleMouseMove = () => {
+      // Real-time visual feedback deferred; drop is handled in handleMouseUp
     };
 
     const handleMouseUp = async (e: MouseEvent) => {
@@ -180,7 +160,7 @@ export default function GanttChart({ phases, showFilter = true }: GanttChartProp
         try {
           await updateTaskDates(dragTask.id, newStart.toISOString(), newEnd.toISOString());
           router.refresh();
-        } catch (err) {
+        } catch {
           toast.error("Failed to update timeline");
         }
       }
@@ -200,7 +180,7 @@ export default function GanttChart({ phases, showFilter = true }: GanttChartProp
   // Calculate task positions for dependency lines
   const taskPositions = useMemo(() => {
     const pos: Record<string, { x: number, y: number, w: number, center: { x: number, y: number } }> = {};
-    let currentY = 12 * 4; // Skip the top axis (12 and sync it with the content)
+    // Skip the top axis (12 and sync it with the content)
     // Actually, in the main grid, each phase header is 48px, then each task is 48px.
     // Let's compute this more precisely.
     let yOffset = 0;
@@ -276,7 +256,7 @@ export default function GanttChart({ phases, showFilter = true }: GanttChartProp
             <div className="relative">
               <select
                 value={internalStatus}
-                onChange={(e) => setInternalStatus(e.target.value as any)}
+                onChange={(e) => setInternalStatus(e.target.value as TStatus | "all")}
                 className="appearance-none bg-slate-50 border border-slate-100 rounded-xl pl-3 pr-8 py-1.5 text-[9px] font-black uppercase tracking-widest text-slate-500 focus:ring-1 focus:ring-blue-500 transition-all cursor-pointer"
               >
                 <option value="all">Status</option>

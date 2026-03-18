@@ -24,11 +24,10 @@ export default function InviteMemberModal({ orgId, orgName }: Props) {
       await inviteUserToOrgAction(orgId, email, fullName);
       toast.success(`Invite sent to ${email} for ${orgName}`);
       setIsOpen(false);
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setLoading(false);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to send invitation");
     }
+    setLoading(false);
   }
 
   if (!isOpen) {

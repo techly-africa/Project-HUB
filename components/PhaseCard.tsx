@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { createTask, deletePhase } from "@/lib/queries";
+import { deletePhase } from "@/lib/queries";
 import { useRouter } from "next/navigation";
 import type { Phase, Task } from "@/lib/types";
 import PhaseProgress from "./PhaseProgress";

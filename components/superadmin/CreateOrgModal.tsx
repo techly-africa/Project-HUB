@@ -16,8 +16,8 @@ export default function CreateOrgModal() {
       await createOrgAction(formData);
       toast.success("Organization created successfully");
       setIsOpen(false);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to create organization");
     } finally {
       setLoading(false);
     }

@@ -58,6 +58,16 @@ export default function StatusUpdateModal({ project, plans, onClose }: Props) {
     setIdx(clamped);
   }, [idx, total]);
 
+  const exitFs = () => { if (document.fullscreenElement) document.exitFullscreen(); };
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen?.();
+    } else {
+      exitFs();
+    }
+  }, []);
+
   // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -78,7 +88,7 @@ export default function StatusUpdateModal({ project, plans, onClose }: Props) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [idx, fullscreen, presenter, go, onClose, total]);
+  }, [idx, fullscreen, presenter, go, onClose, total, toggleFullscreen]);
 
   // Fullscreen listeners
   useEffect(() => {
@@ -86,15 +96,6 @@ export default function StatusUpdateModal({ project, plans, onClose }: Props) {
     document.addEventListener("fullscreenchange", onFsChange);
     return () => document.removeEventListener("fullscreenchange", onFsChange);
   }, []);
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen?.();
-    } else {
-      exitFs();
-    }
-  };
-  const exitFs = () => { if (document.fullscreenElement) document.exitFullscreen(); };
 
   // Print all slides
   const handlePrint = useCallback(() => {
