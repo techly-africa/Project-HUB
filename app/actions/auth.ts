@@ -1,7 +1,36 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/lib/supabase-admin";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { sendEmail, passwordResetEmail } from "@/lib/email";
+
+/**
+ * Called immediately after a successful signInWithPassword() on the client.
+ * Runs server-side so it can use the service-role key to reliably check
+ * is_superadmin without RLS constraints.
+ *
+ * @param next  Optional URL the user was trying to reach before being sent to login.
+ */
+export async function getPostLoginRedirect(next?: string): Promise<string> {
+  const sb = createSupabaseServerClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return "/login";
+
+  const admin = createSupabaseAdminClient();
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("is_superadmin")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.is_superadmin) {
+    // Honour the original destination if it was under /superadmin
+    return next?.startsWith("/superadmin") ? next : "/superadmin";
+  }
+
+  // Authenticated but not superadmin — send to main app
+  return next && !next.startsWith("/superadmin") ? next : "/";
+}
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://hub.avel.africa";
 

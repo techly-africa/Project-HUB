@@ -1,15 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { Suspense } from "react";
 import BrandLogo from "@/components/BrandLogo";
 import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { getPostLoginRedirect } from "@/app/actions/auth";
 
 function LoginForm() {
-  const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") ?? undefined;
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -22,24 +25,16 @@ function LoginForm() {
     setState("loading");
     const sb = getSupabaseBrowserClient();
 
-    const { data: { user }, error: sbError } = await sb.auth.signInWithPassword({ email, password });
+    const { error: sbError } = await sb.auth.signInWithPassword({ email, password });
 
     if (sbError) {
       setState("error");
       setError(sbError.message);
-    } else if (user) {
-      const { data: profile } = await sb
-        .from("profiles")
-        .select("is_superadmin")
-        .eq("id", user.id)
-        .single();
-      
-      if (profile?.is_superadmin) {
-        router.push("/superadmin");
-      } else {
-        router.push("/");
-      }
-      router.refresh();
+    } else {
+      // Server action reads the session server-side (bypasses RLS) and returns
+      // the correct redirect URL based on is_superadmin status.
+      const redirectUrl = await getPostLoginRedirect(next);
+      window.location.href = redirectUrl;
     }
   }
 

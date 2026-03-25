@@ -32,11 +32,11 @@ export async function GET(request: NextRequest) {
       // a null organization_id means the domain isn't registered.
       const { data: profile } = await supabase
         .from("profiles")
-        .select("organization_id")
+        .select("organization_id, is_superadmin")
         .eq("id", data.user.id)
         .single();
 
-      if (!profile?.organization_id) {
+      if (!profile?.is_superadmin && !profile?.organization_id) {
         await supabase.auth.signOut();
         return NextResponse.redirect(`${origin}/login?error=unauthorised`);
       }
